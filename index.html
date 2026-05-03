@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🎁 Nossa Lista de Presentes</title>
+  <title> Nossa Lista de Presentes 🎁</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -151,7 +151,7 @@
   <div class="login-card">
     <div class="login-emoji">🎁</div>
     <h1>Nossa Listinha</h1>
-    <p>Entre com sua conta Google para ver e editar a lista de presentes de vocês dois.</p>
+    <p>Entre com sua conta Google para ver e editar a lista de presentes.</p>
     <button class="google-btn" id="loginBtn" onclick="signIn()">
       <svg class="google-icon" viewBox="0 0 48 48">
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -168,7 +168,7 @@
 <!-- APP -->
 <div id="appScreen">
   <header>
-    <h1>🎁 Nossa Lista de Presentes</h1>
+    <h1> Nossa Lista de Presentes 🎁</h1>
     <p>nossa listinha de desejinhos</p>
     <div class="user-bar">
       <img class="user-avatar" id="userAvatar" src="" alt="" onerror="this.style.display='none'" />
@@ -184,15 +184,15 @@
 
   <div class="tabs-wrap">
     <button class="tab-btn active" id="tab-mine" onclick="setTab('mine')">
-      💙 Meus Presentes <span class="tab-count" id="count-mine">0</span>
+      💙 Presentes de Caio <span class="tab-count" id="count-mine">0</span>
     </button>
     <button class="tab-btn" id="tab-hers" onclick="setTab('hers')">
-      🩷 Dela <span class="tab-count" id="count-hers">0</span>
+      🩷 Presentes de Clarice <span class="tab-count" id="count-hers">0</span>
     </button>
   </div>
 
   <div class="add-section">
-    <h3 id="add-title">Adicionar presente (meu)</h3>
+    <h3 id="add-title">Adicionar presente (Caio)</h3>
 
     <!-- URL -->
     <div class="input-row">
@@ -422,7 +422,7 @@
     activeTab = tab;
     document.getElementById('tab-mine').classList.toggle('active', tab==='mine');
     document.getElementById('tab-hers').classList.toggle('active', tab==='hers');
-    document.getElementById('add-title').textContent = tab==='mine'?'Adicionar presente (meu)':'Adicionar presente (dela)';
+    document.getElementById('add-title').textContent = tab==='mine'?'Adicionar presente (Caio)':'Adicionar presente (Clarice)';
     renderGrid();
   };
 
