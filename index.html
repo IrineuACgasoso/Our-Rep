@@ -30,9 +30,84 @@
       color: var(--text);
     }
 
+    /* ── Login Screen ── */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background: linear-gradient(160deg, #FDF0EC 0%, #FAD5C9 100%);
+    }
+    .login-card {
+      background: var(--white);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(232,133,106,0.18);
+      border: 1.5px solid var(--salmon-pale);
+      max-width: 380px;
+      width: 100%;
+      animation: fadeUp .4s ease both;
+    }
+    .login-emoji { font-size: 56px; margin-bottom: 1rem; }
+    .login-card h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      color: var(--salmon-deep);
+      margin-bottom: 8px;
+    }
+    .login-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 1.5px solid var(--salmon-pale);
+      background: #fff;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .22s ease;
+      box-shadow: 0 2px 8px rgba(232,133,106,0.1);
+    }
+    .google-btn:hover {
+      border-color: var(--salmon);
+      box-shadow: 0 4px 16px rgba(232,133,106,0.22);
+      transform: translateY(-1px);
+    }
+    .google-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .google-icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .login-err {
+      margin-top: 14px;
+      color: var(--salmon-dark);
+      font-size: 13px;
+      padding: 10px 14px;
+      background: #fdeae4;
+      border-radius: 10px;
+      border-left: 3px solid var(--salmon);
+      display: none;
+      text-align: left;
+    }
+
+    /* ── App (hidden until logged in) ── */
+    #appScreen { display: none; }
+
+    /* ── Header ── */
     header {
       background: linear-gradient(135deg, #E8856A 0%, #F4A591 55%, #F9C4B3 100%);
-      padding: 2.5rem 1.5rem 2rem;
+      padding: 2rem 1.5rem 1.8rem;
       text-align: center;
       position: relative;
       overflow: hidden;
@@ -45,205 +120,171 @@
     }
     header h1 {
       font-family: 'Playfair Display', Georgia, serif;
-      font-size: clamp(24px, 5vw, 36px);
+      font-size: clamp(22px, 5vw, 32px);
       font-weight: 600;
       color: #fff;
-      letter-spacing: -0.5px;
       text-shadow: 0 2px 8px rgba(120,40,10,0.15);
       position: relative;
     }
     header p {
       color: rgba(255,255,255,0.82);
-      font-size: 14px;
-      margin-top: 6px;
+      font-size: 13px;
+      margin-top: 4px;
       font-weight: 300;
-      letter-spacing: 0.5px;
       position: relative;
     }
-
-    .status-bar {
+    .user-bar {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 8px 1.5rem;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-      transition: color 0.3s;
+      gap: 10px;
+      margin-top: 12px;
+      position: relative;
     }
-    .status-dot {
-      width: 7px;
-      height: 7px;
+    .user-avatar {
+      width: 28px; height: 28px;
       border-radius: 50%;
-      background: var(--text-muted);
-      transition: background 0.3s;
+      border: 2px solid rgba(255,255,255,0.6);
     }
-    .status-bar.connected { color: #3a9e6e; }
-    .status-bar.connected .status-dot { background: #3a9e6e; animation: pulse 2s infinite; }
-    .status-bar.error { color: var(--salmon-dark); }
-    .status-bar.error .status-dot { background: var(--salmon-dark); }
+    .user-name {
+      color: rgba(255,255,255,0.9);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .logout-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.32); }
+
+    /* ── Status ── */
+    .status-bar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 8px; font-size: 12px; font-weight: 500; color: var(--text-muted);
+    }
+    .status-dot { width:7px; height:7px; border-radius:50%; background:var(--text-muted); }
+    .status-bar.connected { color:#3a9e6e; }
+    .status-bar.connected .status-dot { background:#3a9e6e; animation:pulse 2s infinite; }
+    .status-bar.error { color:var(--salmon-dark); }
+    .status-bar.error .status-dot { background:var(--salmon-dark); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
+    /* ── Tabs ── */
     .tabs-wrap {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      padding: 0.8rem 1.5rem 0.5rem;
-      flex-wrap: wrap;
+      display: flex; gap: 10px; justify-content: center;
+      padding: 0.8rem 1.5rem 0.5rem; flex-wrap: wrap;
     }
     .tab-btn {
       font-family: 'Nunito', sans-serif;
-      padding: 10px 28px;
-      border-radius: 50px;
-      border: 2px solid var(--salmon);
-      background: transparent;
-      color: var(--salmon-dark);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.22s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      padding: 10px 28px; border-radius: 50px;
+      border: 2px solid var(--salmon); background: transparent;
+      color: var(--salmon-dark); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: all .22s ease;
+      display: flex; align-items: center; gap: 6px;
     }
     .tab-btn.active {
-      background: var(--salmon);
-      color: #fff;
-      box-shadow: 0 6px 18px rgba(232,133,106,0.38);
-      transform: translateY(-1px);
+      background: var(--salmon); color: #fff;
+      box-shadow: 0 6px 18px rgba(232,133,106,.38); transform: translateY(-1px);
     }
     .tab-btn:hover:not(.active) { background: var(--salmon-pale); }
     .tab-count {
-      background: rgba(255,255,255,0.28);
-      border-radius: 50px;
-      padding: 1px 9px;
-      font-size: 11px;
-      font-weight: 700;
+      background: rgba(255,255,255,.28); border-radius: 50px;
+      padding: 1px 9px; font-size: 11px; font-weight: 700;
     }
     .tab-btn:not(.active) .tab-count { background: var(--salmon-pale); color: var(--salmon-dark); }
 
+    /* ── Add Section ── */
     .add-section {
-      margin: 1rem 1.5rem 0;
-      background: var(--white);
-      border-radius: 18px;
-      padding: 1.4rem 1.5rem;
+      margin: 1rem 1.5rem 0; background: var(--white);
+      border-radius: 18px; padding: 1.4rem 1.5rem;
       border: 1.5px solid var(--salmon-pale);
-      box-shadow: 0 4px 20px rgba(232,133,106,0.08);
+      box-shadow: 0 4px 20px rgba(232,133,106,.08);
     }
-    .add-section h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 15px;
-      color: var(--salmon-deep);
-      margin-bottom: 1rem;
-    }
-    .input-row { display: flex; gap: 8px; align-items: stretch; }
+    .add-section h3 { font-family:'Playfair Display',serif; font-size:15px; color:var(--salmon-deep); margin-bottom:1rem; }
+    .input-row { display:flex; gap:8px; align-items:stretch; }
     .url-input {
-      flex: 1;
-      padding: 11px 16px;
-      border-radius: 12px;
-      border: 1.5px solid var(--salmon-pale);
-      background: var(--salmon-bg);
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px;
-      color: var(--text);
-      outline: none;
-      transition: border .2s, box-shadow .2s;
+      flex:1; padding:11px 16px; border-radius:12px;
+      border:1.5px solid var(--salmon-pale); background:var(--salmon-bg);
+      font-family:'Nunito',sans-serif; font-size:13px; color:var(--text);
+      outline:none; transition:border .2s, box-shadow .2s;
     }
-    .url-input:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px rgba(232,133,106,.15); }
-    .url-input::placeholder { color: var(--text-muted); }
+    .url-input:focus { border-color:var(--salmon); box-shadow:0 0 0 3px rgba(232,133,106,.15); }
+    .url-input::placeholder { color:var(--text-muted); }
     .add-btn {
-      padding: 11px 22px;
-      border-radius: 12px;
-      border: none;
-      background: var(--salmon);
-      color: #fff;
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all .2s;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      min-width: 110px;
+      padding:11px 22px; border-radius:12px; border:none;
+      background:var(--salmon); color:#fff;
+      font-family:'Nunito',sans-serif; font-size:13px; font-weight:700;
+      cursor:pointer; transition:all .2s; white-space:nowrap;
+      display:flex; align-items:center; justify-content:center; gap:6px; min-width:110px;
     }
-    .add-btn:hover { background: var(--salmon-dark); transform: translateY(-1px); }
-    .add-btn:disabled { background: var(--salmon-light); cursor: not-allowed; transform: none; }
-    .name-row { display: flex; gap: 8px; margin-top: 10px; }
+    .add-btn:hover { background:var(--salmon-dark); transform:translateY(-1px); }
+    .add-btn:disabled { background:var(--salmon-light); cursor:not-allowed; transform:none; }
+    .name-row { display:flex; gap:8px; margin-top:10px; }
     .name-inp {
-      flex: 1;
-      padding: 9px 14px;
-      border-radius: 12px;
-      border: 1.5px solid var(--salmon-pale);
-      background: var(--salmon-bg);
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px;
-      color: var(--text);
-      outline: none;
-      transition: border .2s, box-shadow .2s;
+      flex:1; padding:9px 14px; border-radius:12px;
+      border:1.5px solid var(--salmon-pale); background:var(--salmon-bg);
+      font-family:'Nunito',sans-serif; font-size:13px; color:var(--text);
+      outline:none; transition:border .2s, box-shadow .2s;
     }
-    .name-inp:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px rgba(232,133,106,.15); }
-    .name-inp::placeholder { color: var(--text-muted); }
+    .name-inp:focus { border-color:var(--salmon); box-shadow:0 0 0 3px rgba(232,133,106,.15); }
+    .name-inp::placeholder { color:var(--text-muted); }
     .err-msg {
-      color: var(--salmon-dark);
-      font-size: 12px;
-      margin-top: 8px;
-      padding: 8px 12px;
-      background: #fdeae4;
-      border-radius: 8px;
-      border-left: 3px solid var(--salmon);
+      color:var(--salmon-dark); font-size:12px; margin-top:8px;
+      padding:8px 12px; background:#fdeae4; border-radius:8px;
+      border-left:3px solid var(--salmon);
     }
 
+    /* ── Grid ── */
     .gifts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
-      gap: 16px;
-      padding: 1.5rem;
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(165px,1fr));
+      gap:16px; padding:1.5rem;
     }
-
     .gift-card {
-      background: var(--salmon-card);
-      border-radius: 16px;
-      border: 1.5px solid var(--salmon-pale);
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform .2s ease, box-shadow .2s ease;
-      position: relative;
-      animation: fadeUp .35s ease both;
+      background:var(--salmon-card); border-radius:16px;
+      border:1.5px solid var(--salmon-pale); overflow:hidden;
+      cursor:pointer; transition:transform .2s ease, box-shadow .2s ease;
+      position:relative; animation:fadeUp .35s ease both;
     }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-    .gift-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(232,133,106,.22); }
+    .gift-card:hover { transform:translateY(-4px); box-shadow:0 10px 28px rgba(232,133,106,.22); }
     .gift-img { width:100%; height:150px; object-fit:cover; display:block; background:var(--salmon-pale); }
     .gift-img-placeholder {
       width:100%; height:150px;
-      background: linear-gradient(135deg, var(--salmon-pale), var(--salmon-light));
+      background:linear-gradient(135deg,var(--salmon-pale),var(--salmon-light));
       display:flex; align-items:center; justify-content:center; font-size:44px;
     }
-    .gift-info { padding: 12px 14px 14px; }
+    .gift-info { padding:12px 14px 14px; }
     .gift-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.45;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      font-family:'Playfair Display',serif; font-size:13px; font-weight:500;
+      color:var(--text); line-height:1.45;
+      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
     }
-    .gift-domain { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .gift-domain { font-size:11px; color:var(--text-muted); margin-top:5px; }
     .del-btn {
-      position:absolute; top:8px; right:8px;
-      width:26px; height:26px; border-radius:50%; border:none;
-      background:rgba(255,255,255,.9); color:var(--salmon-dark); font-size:12px;
-      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      position:absolute; top:8px; right:8px; width:26px; height:26px;
+      border-radius:50%; border:none; background:rgba(255,255,255,.9);
+      color:var(--salmon-dark); font-size:12px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
       opacity:0; transition:opacity .2s, background .2s;
     }
     .gift-card:hover .del-btn { opacity:1; }
     .del-btn:hover { background:var(--salmon); color:#fff; }
 
+    /* ── Empty ── */
     .empty-state { grid-column:1/-1; text-align:center; padding:4rem 1.5rem; }
     .empty-icon { font-size:56px; margin-bottom:14px; }
     .empty-state p { font-family:'Playfair Display',serif; font-size:18px; color:var(--salmon-dark); }
     .empty-state span { font-size:13px; color:var(--text-muted); display:block; margin-top:6px; }
 
+    /* ── Spinner ── */
     .spinner {
       width:16px; height:16px;
       border:2.5px solid rgba(255,255,255,.4); border-top-color:#fff;
@@ -251,6 +292,7 @@
     }
     @keyframes spin { to{transform:rotate(360deg)} }
 
+    /* ── Toast ── */
     .toast {
       position:fixed; bottom:24px; left:50%;
       transform:translateX(-50%) translateY(20px);
@@ -264,51 +306,85 @@
       .gifts-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;padding:1rem;}
       .add-section{margin:1rem;padding:1.2rem;}
       .tab-btn{padding:9px 20px;font-size:13px;}
+      .login-card{padding:2rem 1.5rem;}
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>🎁 Nossa Lista de Presentes</h1>
-  <p>nossa listinha de desejinhos</p>
-</header>
-
-<div class="status-bar" id="statusBar">
-  <div class="status-dot"></div>
-  <span id="statusText">Conectando...</span>
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-emoji">🎁</div>
+    <h1>Nossa Listinha</h1>
+    <p>Entre com sua conta Google para ver e editar a lista de presentes de vocês dois.</p>
+    <button class="google-btn" id="loginBtn" onclick="signIn()">
+      <svg class="google-icon" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Entrar com Google
+    </button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
 </div>
 
-<div class="tabs-wrap">
-  <button class="tab-btn active" id="tab-mine" onclick="setTab('mine')">
-    💙 Meus Presentes <span class="tab-count" id="count-mine">0</span>
-  </button>
-  <button class="tab-btn" id="tab-hers" onclick="setTab('hers')">
-    🩷 Dela <span class="tab-count" id="count-hers">0</span>
-  </button>
-</div>
+<!-- ── APP SCREEN ── -->
+<div id="appScreen">
+  <header>
+    <h1>🎁 Nossa Lista de Presentes</h1>
+    <p>nossa listinha de desejinhos</p>
+    <div class="user-bar">
+      <img class="user-avatar" id="userAvatar" src="" alt="" />
+      <span class="user-name" id="userName"></span>
+      <button class="logout-btn" onclick="signOut()">Sair</button>
+    </div>
+  </header>
 
-<div class="add-section">
-  <h3 id="add-title">Adicionar presente (meu)</h3>
-  <div class="input-row">
-    <input class="url-input" id="urlInp" type="url" placeholder="Cole o link do presente aqui..." autocomplete="off" />
-    <button class="add-btn" id="addBtn" onclick="handleAdd()">
-      <span id="addBtnInner">+ Adicionar</span>
+  <div class="status-bar" id="statusBar">
+    <div class="status-dot"></div>
+    <span id="statusText">Conectando...</span>
+  </div>
+
+  <div class="tabs-wrap">
+    <button class="tab-btn active" id="tab-mine" onclick="setTab('mine')">
+      💙 Meus Presentes <span class="tab-count" id="count-mine">0</span>
+    </button>
+    <button class="tab-btn" id="tab-hers" onclick="setTab('hers')">
+      🩷 Dela <span class="tab-count" id="count-hers">0</span>
     </button>
   </div>
-  <div class="name-row">
-    <input class="name-inp" id="nameInp" type="text" placeholder="Nome personalizado (opcional)" />
+
+  <div class="add-section">
+    <h3 id="add-title">Adicionar presente (meu)</h3>
+    <div class="input-row">
+      <input class="url-input" id="urlInp" type="url" placeholder="Cole o link do presente aqui..." autocomplete="off" />
+      <button class="add-btn" id="addBtn" onclick="handleAdd()">
+        <span id="addBtnInner">+ Adicionar</span>
+      </button>
+    </div>
+    <div class="name-row">
+      <input class="name-inp" id="nameInp" type="text" placeholder="Nome personalizado (opcional)" />
+    </div>
+    <div class="err-msg" id="errMsg" style="display:none"></div>
   </div>
-  <div class="err-msg" id="errMsg" style="display:none"></div>
+
+  <div class="gifts-grid" id="giftsGrid"></div>
 </div>
 
-<div class="gifts-grid" id="giftsGrid"></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, onValue, push, remove }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
+                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  /* ── Config ── */
+  const ALLOWED_EMAILS = ['caioac2006@gmail.com', 'clarifloralmeida@gmail.com'];
 
   const firebaseConfig = {
     apiKey:            "AIzaSyBduG0oZnA__HxcvQ16f7wC2TlcSgGEuBQ",
@@ -321,11 +397,70 @@
     measurementId:     "G-T1TK5LNNXX"
   };
 
-  const db = getDatabase(initializeApp(firebaseConfig));
+  const app      = initializeApp(firebaseConfig);
+  const db       = getDatabase(app);
+  const auth     = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-  let activeTab = 'mine';
-  let giftsData = { mine: {}, hers: {} };
-  let fetching  = false;
+  let activeTab  = 'mine';
+  let giftsData  = { mine: {}, hers: {} };
+  let fetching   = false;
+  let dbListeners = [];
+
+  /* ── Auth ── */
+  onAuthStateChanged(auth, user => {
+    if (user && ALLOWED_EMAILS.includes(user.email)) {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display   = 'block';
+      document.getElementById('userAvatar').src  = user.photoURL || '';
+      document.getElementById('userName').textContent = user.displayName || user.email;
+      startListeners();
+    } else {
+      if (user) {
+        fbSignOut(auth);
+        showLoginErr('Acesso negado. Essa conta não tem permissão.');
+      }
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('appScreen').style.display   = 'none';
+    }
+  });
+
+  window.signIn = async function() {
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner" style="border-top-color:var(--salmon);border-color:var(--salmon-pale)"></div> Entrando...`;
+    showLoginErr('');
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      showLoginErr('Erro ao entrar. Tente novamente.');
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="google-icon" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.29-8.16 2.29-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg> Entrar com Google`;
+    }
+  };
+
+  window.signOut = async function() {
+    await fbSignOut(auth);
+    showToast('Até logo! 👋');
+  };
+
+  function showLoginErr(msg) {
+    const el = document.getElementById('loginErr');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
+
+  /* ── DB Listeners ── */
+  function startListeners() {
+    ['mine','hers'].forEach(tab => {
+      onValue(ref(db, `gifts/${tab}`), snap => {
+        giftsData[tab] = snap.val() || {};
+        updateCounts();
+        if (activeTab === tab) renderGrid();
+        setStatus('connected');
+      }, () => setStatus('error'));
+    });
+  }
 
   function setStatus(s) {
     const bar = document.getElementById('statusBar');
@@ -336,31 +471,22 @@
       :                   'Conectando...';
   }
 
-  function listenTab(tab) {
-    onValue(ref(db, `gifts/${tab}`), snap => {
-      giftsData[tab] = snap.val() || {};
-      updateCounts();
-      if (activeTab === tab) renderGrid();
-      setStatus('connected');
-    }, () => setStatus('error'));
-  }
-  listenTab('mine');
-  listenTab('hers');
-
+  /* ── OG Fetch ── */
   async function fetchOG(url) {
-    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-                          { signal: AbortSignal.timeout(8000) });
-    const j = await r.json();
+    const r   = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                            { signal: AbortSignal.timeout(8000) });
+    const j   = await r.json();
     const doc = new DOMParser().parseFromString(j.contents || '', 'text/html');
     const base = new URL(url);
     let title = doc.querySelector('meta[property="og:title"]')?.content
               || doc.querySelector('title')?.textContent || '';
     let image = doc.querySelector('meta[property="og:image"]')?.content || '';
     if (image && image.startsWith('/')) image = base.origin + image;
-    return { title: title.trim().slice(0, 120), image };
+    return { title: title.trim().slice(0,120), image };
   }
 
-  window.handleAdd = async function () {
+  /* ── Add Gift ── */
+  window.handleAdd = async function() {
     if (fetching) return;
     showError('');
     let rawUrl = document.getElementById('urlInp').value.trim();
@@ -380,19 +506,21 @@
 
     try {
       await push(ref(db, `gifts/${activeTab}`), { url: rawUrl, title, image, addedAt: Date.now() });
-      document.getElementById('urlInp').value = '';
+      document.getElementById('urlInp').value  = '';
       document.getElementById('nameInp').value = '';
       showToast('Presente adicionado! 🎁');
     } catch { showError('Erro ao salvar. Verifique sua conexão.'); }
     setLoading(false);
   };
 
-  window.removeGift = async function (key) {
+  /* ── Remove Gift ── */
+  window.removeGift = async function(key) {
     try { await remove(ref(db, `gifts/${activeTab}/${key}`)); showToast('Presente removido.'); }
     catch { showError('Erro ao remover.'); }
   };
 
-  window.setTab = function (tab) {
+  /* ── Tab ── */
+  window.setTab = function(tab) {
     activeTab = tab;
     document.getElementById('tab-mine').classList.toggle('active', tab === 'mine');
     document.getElementById('tab-hers').classList.toggle('active', tab === 'hers');
@@ -401,19 +529,20 @@
     renderGrid();
   };
 
+  /* ── Render ── */
   function renderGrid() {
     const grid   = document.getElementById('giftsGrid');
     const entries = Object.entries(giftsData[activeTab])
-                          .sort((a, b) => (b[1].addedAt || 0) - (a[1].addedAt || 0));
+                          .sort((a,b) => (b[1].addedAt||0)-(a[1].addedAt||0));
     if (!entries.length) {
       grid.innerHTML = `<div class="empty-state">
-        <div class="empty-icon">${activeTab === 'mine' ? '💙' : '🩷'}</div>
+        <div class="empty-icon">${activeTab==='mine'?'💙':'🩷'}</div>
         <p>Nenhum presente ainda</p>
         <span>Cole um link acima para começar a listinha!</span>
       </div>`;
       return;
     }
-    grid.innerHTML = entries.map(([key, g]) => `
+    grid.innerHTML = entries.map(([key,g]) => `
       <div class="gift-card" onclick="window.open('${esc(g.url)}','_blank')">
         ${g.image
           ? `<img class="gift-img" src="${escH(g.image)}" alt=""
@@ -432,16 +561,17 @@
     document.getElementById('count-hers').textContent = Object.keys(giftsData.hers).length;
   }
 
+  /* ── Helpers ── */
   function setLoading(on) {
     fetching = on;
     document.getElementById('addBtn').disabled = on;
     document.getElementById('addBtnInner').innerHTML = on ? '<div class="spinner"></div>' : '+ Adicionar';
   }
-  function showError(m) { const e = document.getElementById('errMsg'); e.textContent=m; e.style.display=m?'block':'none'; }
+  function showError(m) { const e=document.getElementById('errMsg'); e.textContent=m; e.style.display=m?'block':'none'; }
   function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
-  function domain(u)  { try{return new URL(u).hostname.replace('www.','')}catch{return ''} }
-  function esc(s)     { return String(s||'').replace(/'/g,"\\'") }
-  function escH(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+  function domain(u)    { try{return new URL(u).hostname.replace('www.','')}catch{return ''} }
+  function esc(s)       { return String(s||'').replace(/'/g,"\\'") }
+  function escH(s)      { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
 
   document.getElementById('urlInp').addEventListener('keydown',  e => e.key==='Enter' && handleAdd());
   document.getElementById('nameInp').addEventListener('keydown', e => e.key==='Enter' && handleAdd());
