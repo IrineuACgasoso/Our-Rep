@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title> Nossa Lista de Presentes 🎁</title>
+  <title>Nossa Listinha 🎁</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -16,7 +16,7 @@
     }
     body { font-family: 'Nunito', sans-serif; background: var(--salmon-bg); min-height: 100vh; color: var(--text); }
 
-    /* LOGIN */
+    /* ── LOGIN ── */
     #loginScreen {
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center; padding: 2rem;
@@ -43,10 +43,10 @@
     .google-icon { width: 20px; height: 20px; flex-shrink: 0; }
     .login-err { margin-top: 14px; color: var(--salmon-dark); font-size: 13px; padding: 10px 14px; background: #fdeae4; border-radius: 10px; border-left: 3px solid var(--salmon); display: none; text-align: left; }
 
-    /* APP */
+    /* ── APP ── */
     #appScreen { display: none; }
 
-    /* HEADER */
+    /* ── HEADER ── */
     header {
       background: linear-gradient(135deg, #E8856A 0%, #F4A591 55%, #F9C4B3 100%);
       padding: 2rem 1.5rem 1.8rem; text-align: center; position: relative; overflow: hidden;
@@ -60,7 +60,7 @@
     .logout-btn { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.35); color: #fff; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 50px; cursor: pointer; transition: background .2s; }
     .logout-btn:hover { background: rgba(255,255,255,.32); }
 
-    /* STATUS */
+    /* ── STATUS ── */
     .status-bar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 12px; font-weight: 500; color: var(--text-muted); }
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
     .status-bar.connected { color: #3a9e6e; }
@@ -69,7 +69,29 @@
     .status-bar.error .status-dot { background: var(--salmon-dark); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-    /* TABS */
+    /* ── MAIN NAV (3 sections) ── */
+    .main-nav {
+      display: flex; gap: 0; background: var(--white);
+      border-bottom: 2px solid var(--salmon-pale); position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 2px 12px rgba(232,133,106,.1);
+    }
+    .main-nav-btn {
+      flex: 1; padding: 14px 10px; border: none; background: transparent;
+      font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; transition: all .22s ease;
+      border-bottom: 3px solid transparent; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; line-height: 1.2;
+    }
+    .main-nav-btn .nav-icon { font-size: 20px; }
+    .main-nav-btn.active { color: var(--salmon-dark); border-bottom-color: var(--salmon); background: var(--salmon-bg); }
+    .main-nav-btn:hover:not(.active) { color: var(--salmon); background: #fef6f3; }
+
+    /* ── SECTION PANELS ── */
+    .section-panel { display: none; }
+    .section-panel.active { display: block; animation: fadeUp .3s ease both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── TABS (sub-tabs inside section) ── */
     .tabs-wrap { display: flex; gap: 10px; justify-content: center; padding: .8rem 1.5rem .5rem; flex-wrap: wrap; }
     .tab-btn { font-family: 'Nunito', sans-serif; padding: 10px 28px; border-radius: 50px; border: 2px solid var(--salmon); background: transparent; color: var(--salmon-dark); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .22s ease; display: flex; align-items: center; gap: 6px; }
     .tab-btn.active { background: var(--salmon); color: #fff; box-shadow: 0 6px 18px rgba(232,133,106,.38); transform: translateY(-1px); }
@@ -77,22 +99,24 @@
     .tab-count { background: rgba(255,255,255,.28); border-radius: 50px; padding: 1px 9px; font-size: 11px; font-weight: 700; }
     .tab-btn:not(.active) .tab-count { background: var(--salmon-pale); color: var(--salmon-dark); }
 
-    /* ADD SECTION */
+    /* ── ADD SECTION ── */
     .add-section { margin: 1rem 1.5rem 0; background: var(--white); border-radius: 18px; padding: 1.4rem 1.5rem; border: 1.5px solid var(--salmon-pale); box-shadow: 0 4px 20px rgba(232,133,106,.08); }
     .add-section h3 { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--salmon-deep); margin-bottom: 1rem; }
     .input-row { display: flex; gap: 8px; align-items: stretch; }
-    .url-input { flex: 1; padding: 11px 16px; border-radius: 12px; border: 1.5px solid var(--salmon-pale); background: var(--salmon-bg); font-family: 'Nunito', sans-serif; font-size: 13px; color: var(--text); outline: none; transition: border .2s, box-shadow .2s; }
-    .url-input:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px rgba(232,133,106,.15); }
-    .url-input::placeholder { color: var(--text-muted); }
+    .field-inp {
+      flex: 1; padding: 11px 16px; border-radius: 12px; border: 1.5px solid var(--salmon-pale);
+      background: var(--salmon-bg); font-family: 'Nunito', sans-serif; font-size: 13px;
+      color: var(--text); outline: none; transition: border .2s, box-shadow .2s;
+    }
+    .field-inp:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px rgba(232,133,106,.15); }
+    .field-inp::placeholder { color: var(--text-muted); }
+    .field-inp.small { flex: none; width: 80px; text-align: center; }
     .add-btn { padding: 11px 22px; border-radius: 12px; border: none; background: var(--salmon); color: #fff; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s; white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 110px; }
     .add-btn:hover { background: var(--salmon-dark); transform: translateY(-1px); }
     .add-btn:disabled { background: var(--salmon-light); cursor: not-allowed; transform: none; }
     .name-row { display: flex; gap: 8px; margin-top: 10px; }
-    .name-inp { flex: 1; padding: 9px 14px; border-radius: 12px; border: 1.5px solid var(--salmon-pale); background: var(--salmon-bg); font-family: 'Nunito', sans-serif; font-size: 13px; color: var(--text); outline: none; transition: border .2s, box-shadow .2s; }
-    .name-inp:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px rgba(232,133,106,.15); }
-    .name-inp::placeholder { color: var(--text-muted); }
 
-    /* IMAGE DROP ZONE */
+    /* ── IMAGE DROP ZONE ── */
     .img-drop-zone {
       margin-top: 10px; border: 2px dashed var(--salmon-pale); border-radius: 12px;
       padding: 16px; text-align: center; cursor: pointer; transition: all .2s;
@@ -110,10 +134,9 @@
 
     .err-msg { color: var(--salmon-dark); font-size: 12px; margin-top: 8px; padding: 8px 12px; background: #fdeae4; border-radius: 8px; border-left: 3px solid var(--salmon); }
 
-    /* GRID */
+    /* ── GIFTS GRID ── */
     .gifts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 16px; padding: 1.5rem; }
     .gift-card { background: var(--salmon-card); border-radius: 16px; border: 1.5px solid var(--salmon-pale); overflow: hidden; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; position: relative; animation: fadeUp .35s ease both; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     .gift-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(232,133,106,.22); }
     .gift-img { width: 100%; height: 150px; object-fit: cover; display: block; background: var(--salmon-pale); }
     .gift-img-placeholder { width: 100%; height: 150px; background: linear-gradient(135deg, var(--salmon-pale), var(--salmon-light)); display: flex; align-items: center; justify-content: center; font-size: 44px; }
@@ -124,15 +147,134 @@
     .gift-card:hover .del-btn { opacity: 1; }
     .del-btn:hover { background: var(--salmon); color: #fff; }
 
-    /* EMPTY */
-    .empty-state { grid-column: 1/-1; text-align: center; padding: 4rem 1.5rem; }
+    /* ── RESTAURANTS ── */
+    .rest-list { display: flex; flex-direction: column; gap: 14px; padding: 1.5rem; }
+    .rest-card {
+      background: var(--white); border-radius: 16px; border: 1.5px solid var(--salmon-pale);
+      padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px;
+      transition: transform .2s, box-shadow .2s; position: relative; animation: fadeUp .35s ease both;
+    }
+    .rest-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,133,106,.16); }
+    .rest-icon { font-size: 36px; flex-shrink: 0; }
+    .rest-body { flex: 1; min-width: 0; }
+    .rest-name { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 600; color: var(--text); }
+    .rest-meta { display: flex; align-items: center; gap: 10px; margin-top: 5px; flex-wrap: wrap; }
+    .rest-badge {
+      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 50px;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .rest-badge.visited { background: #d4f4e7; color: #2a7d52; }
+    .rest-badge.unvisited { background: var(--salmon-pale); color: var(--salmon-dark); }
+    .rest-stars { font-size: 14px; color: #f0a830; letter-spacing: 1px; }
+    .rest-note { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; font-style: italic; }
+    .rest-link { font-size: 11px; color: var(--salmon); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; }
+    .rest-link:hover { color: var(--salmon-dark); }
+    .rest-actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex-shrink: 0; }
+    .rest-del-btn { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 4px; border-radius: 6px; transition: color .2s, background .2s; }
+    .rest-del-btn:hover { color: var(--salmon-dark); background: var(--salmon-pale); }
+    .rest-note-btn { background: none; border: 1px solid var(--salmon-pale); color: var(--salmon-dark); font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 50px; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .rest-note-btn:hover { background: var(--salmon-pale); }
+
+    /* rating stars input */
+    .stars-row { display: flex; gap: 4px; margin-top: 8px; align-items: center; }
+    .stars-row label { font-size: 11px; color: var(--text-muted); margin-right: 4px; }
+    .star-btn { background: none; border: none; font-size: 22px; cursor: pointer; color: #ddd; transition: color .15s, transform .15s; padding: 0 2px; }
+    .star-btn.on { color: #f0a830; }
+    .star-btn:hover { transform: scale(1.2); }
+
+    /* inline note editor */
+    .note-editor {
+      margin-top: 10px; padding: 10px 12px; background: var(--salmon-bg);
+      border-radius: 10px; border: 1.5px solid var(--salmon-pale);
+    }
+    .note-editor textarea {
+      width: 100%; resize: vertical; min-height: 60px; border: none; background: transparent;
+      font-family: 'Nunito', sans-serif; font-size: 13px; color: var(--text); outline: none;
+    }
+    .note-editor-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+    .note-save-btn { padding: 6px 18px; border-radius: 10px; border: none; background: var(--salmon); color: #fff; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .2s; }
+    .note-save-btn:hover { background: var(--salmon-dark); }
+    .note-cancel-btn { padding: 6px 14px; border-radius: 10px; border: 1.5px solid var(--salmon-pale); background: transparent; color: var(--text-muted); font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+    /* visited toggle inside add form */
+    .toggle-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .toggle-label { font-size: 13px; color: var(--text-muted); }
+    .toggle-switch { position: relative; width: 44px; height: 24px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0; background: var(--salmon-pale); border-radius: 50px;
+      transition: background .2s; cursor: pointer;
+    }
+    .toggle-track::before {
+      content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px;
+      background: #fff; border-radius: 50%; transition: transform .2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--salmon); }
+    .toggle-switch input:checked + .toggle-track::before { transform: translateX(20px); }
+
+    /* ── TRAVELS ── */
+    .travels-wrap { padding: 1.5rem; }
+    .travel-add-section { background: var(--white); border-radius: 18px; padding: 1.4rem 1.5rem; border: 1.5px solid var(--salmon-pale); box-shadow: 0 4px 20px rgba(232,133,106,.08); margin-bottom: 1.5rem; }
+    .travel-add-section h3 { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--salmon-deep); margin-bottom: 1rem; }
+
+    .destinations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .dest-card {
+      background: var(--white); border-radius: 20px; border: 1.5px solid var(--salmon-pale);
+      overflow: hidden; animation: fadeUp .35s ease both;
+      box-shadow: 0 4px 16px rgba(232,133,106,.08);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .dest-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(232,133,106,.18); }
+    .dest-header {
+      background: linear-gradient(135deg, var(--salmon) 0%, var(--salmon-light) 100%);
+      padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;
+    }
+    .dest-name { font-family: 'Playfair Display', serif; font-size: 17px; color: #fff; font-weight: 600; }
+    .dest-del { background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.35); color: #fff; font-size: 12px; padding: 4px 10px; border-radius: 50px; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 600; transition: background .2s; }
+    .dest-del:hover { background: rgba(255,255,255,.35); }
+
+    /* dest category tabs */
+    .dest-cats { display: flex; gap: 0; border-bottom: 1.5px solid var(--salmon-pale); overflow-x: auto; scrollbar-width: none; }
+    .dest-cats::-webkit-scrollbar { display: none; }
+    .dest-cat-btn {
+      flex-shrink: 0; padding: 9px 14px; border: none; background: transparent;
+      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 600;
+      color: var(--text-muted); cursor: pointer; border-bottom: 2.5px solid transparent;
+      transition: all .2s; white-space: nowrap;
+    }
+    .dest-cat-btn.active { color: var(--salmon-dark); border-bottom-color: var(--salmon); background: var(--salmon-bg); }
+    .dest-cat-btn:hover:not(.active) { color: var(--salmon); }
+
+    /* dest items */
+    .dest-items { padding: 12px 14px; min-height: 80px; }
+    .dest-item {
+      display: flex; align-items: flex-start; gap: 8px; padding: 8px 0;
+      border-bottom: 1px solid var(--salmon-pale);
+    }
+    .dest-item:last-child { border-bottom: none; }
+    .dest-item-dot { width: 7px; height: 7px; background: var(--salmon); border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+    .dest-item-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.5; }
+    .dest-item-del { background: none; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; padding: 2px 5px; border-radius: 5px; flex-shrink: 0; }
+    .dest-item-del:hover { color: var(--salmon-dark); background: var(--salmon-pale); }
+    .dest-add-item { display: flex; gap: 6px; padding: 10px 0 4px; }
+    .dest-add-input { flex: 1; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--salmon-pale); background: var(--salmon-bg); font-family: 'Nunito', sans-serif; font-size: 12px; color: var(--text); outline: none; transition: border .2s; }
+    .dest-add-input:focus { border-color: var(--salmon); }
+    .dest-add-input::placeholder { color: var(--text-muted); }
+    .dest-add-input-btn { padding: 8px 16px; border-radius: 10px; border: none; background: var(--salmon); color: #fff; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: background .2s; }
+    .dest-add-input-btn:hover { background: var(--salmon-dark); }
+
+    .empty-cats { text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { text-align: center; padding: 4rem 1.5rem; }
     .empty-icon { font-size: 56px; margin-bottom: 14px; }
     .empty-state p { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--salmon-dark); }
     .empty-state span { font-size: 13px; color: var(--text-muted); display: block; margin-top: 6px; }
 
+    /* ── MISC ── */
     .spinner { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .65s linear infinite; flex-shrink: 0; }
     @keyframes spin { to{transform:rotate(360deg)} }
-
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--salmon-deep); color: #fff; padding: 10px 22px; border-radius: 50px; font-size: 13px; font-weight: 500; opacity: 0; transition: all .3s ease; pointer-events: none; z-index: 100; white-space: nowrap; }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -141,17 +283,22 @@
       .add-section{margin:1rem;padding:1.2rem;}
       .tab-btn{padding:9px 20px;font-size:13px;}
       .login-card{padding:2rem 1.5rem;}
+      .main-nav-btn { font-size: 11px; }
+      .main-nav-btn .nav-icon { font-size: 18px; }
+      .destinations-grid { grid-template-columns: 1fr; }
+      .rest-list { padding: 1rem; }
+      .travels-wrap { padding: 1rem; }
     }
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
 <div id="loginScreen">
   <div class="login-card">
     <div class="login-emoji">🎁</div>
     <h1>Nossa Listinha</h1>
-    <p>Entre com sua conta Google para ver e editar a lista de presentes.</p>
+    <p>Entre com sua conta Google para ver e editar nossas listas.</p>
     <button class="google-btn" id="loginBtn" onclick="signIn()">
       <svg class="google-icon" viewBox="0 0 48 48">
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -165,11 +312,11 @@
   </div>
 </div>
 
-<!-- APP -->
+<!-- ═══════════════════ APP ═══════════════════ -->
 <div id="appScreen">
   <header>
-    <h1> Nossa Lista de Presentes 🎁</h1>
-    <p>nossa listinha de desejinhos</p>
+    <h1>Nossa Listinha 🎁</h1>
+    <p>nosso cantinho de desejos</p>
     <div class="user-bar">
       <img class="user-avatar" id="userAvatar" src="" alt="" onerror="this.style.display='none'" />
       <span class="user-name" id="userName"></span>
@@ -182,58 +329,131 @@
     <span id="statusText">Conectando...</span>
   </div>
 
-  <div class="tabs-wrap">
-    <button class="tab-btn active" id="tab-mine" onclick="setTab('mine')">
-      💙 Presentes de Caio <span class="tab-count" id="count-mine">0</span>
+  <!-- MAIN NAV -->
+  <nav class="main-nav">
+    <button class="main-nav-btn active" id="nav-gifts" onclick="setSection('gifts')">
+      <span class="nav-icon">🎁</span> Presentes
     </button>
-    <button class="tab-btn" id="tab-hers" onclick="setTab('hers')">
-      🩷 Presentes de Clarice <span class="tab-count" id="count-hers">0</span>
+    <button class="main-nav-btn" id="nav-restaurants" onclick="setSection('restaurants')">
+      <span class="nav-icon">🍽️</span> Restaurantes
     </button>
-  </div>
+    <button class="main-nav-btn" id="nav-travels" onclick="setSection('travels')">
+      <span class="nav-icon">✈️</span> Viagens
+    </button>
+  </nav>
 
-  <div class="add-section">
-    <h3 id="add-title">Adicionar presente (Caio)</h3>
-
-    <!-- URL -->
-    <div class="input-row">
-      <input class="url-input" id="urlInp" type="url" placeholder="Cole o link do presente aqui..." autocomplete="off" />
-      <button class="add-btn" id="addBtn" onclick="handleAdd()">
-        <span id="addBtnInner">+ Adicionar</span>
+  <!-- ═══ SECTION: PRESENTES ═══ -->
+  <div class="section-panel active" id="panel-gifts">
+    <div class="tabs-wrap">
+      <button class="tab-btn active" id="tab-mine" onclick="setGiftTab('mine')">
+        💙 Presentes de Caio <span class="tab-count" id="count-mine">0</span>
+      </button>
+      <button class="tab-btn" id="tab-hers" onclick="setGiftTab('hers')">
+        🩷 Presentes de Clarice <span class="tab-count" id="count-hers">0</span>
       </button>
     </div>
 
-    <!-- Nome -->
-    <div class="name-row">
-      <input class="name-inp" id="nameInp" type="text" placeholder="Nome do presente (obrigatório se não tiver link)" />
-    </div>
-
-    <!-- Imagem -->
-    <div class="img-drop-zone" id="dropZone">
-      <input type="file" id="imgFileInput" accept="image/*" onchange="onFileChosen(this.files[0])" />
-      <div id="dropPrompt">
-        <p>📎 Arraste uma imagem aqui, cole (Ctrl+V) ou clique para escolher</p>
-        <span>Opcional — substitui a imagem do link</span>
+    <div class="add-section">
+      <h3 id="gift-add-title">Adicionar presente (Caio)</h3>
+      <div class="input-row">
+        <input class="field-inp" id="urlInp" type="url" placeholder="Cole o link do presente aqui..." autocomplete="off" />
+        <button class="add-btn" id="addGiftBtn" onclick="handleAddGift()">
+          <span id="addGiftBtnInner">+ Adicionar</span>
+        </button>
       </div>
-      <div id="dropPreview" style="display:none">
-        <div class="img-preview-wrap">
-          <img class="img-preview" id="imgPreviewEl" src="" alt="preview" />
-          <span class="img-preview-name" id="imgPreviewName"></span>
-          <button class="img-clear-btn" onclick="clearImage(event)" title="Remover imagem">✕</button>
+      <div class="name-row">
+        <input class="field-inp" id="nameInp" type="text" placeholder="Nome do presente (obrigatório se não tiver link)" />
+      </div>
+      <div class="img-drop-zone" id="dropZone">
+        <input type="file" id="imgFileInput" accept="image/*" onchange="onFileChosen(this.files[0])" />
+        <div id="dropPrompt">
+          <p>📎 Arraste uma imagem aqui, cole (Ctrl+V) ou clique para escolher</p>
+          <span>Opcional — substitui a imagem do link</span>
+        </div>
+        <div id="dropPreview" style="display:none">
+          <div class="img-preview-wrap">
+            <img class="img-preview" id="imgPreviewEl" src="" alt="preview" />
+            <span class="img-preview-name" id="imgPreviewName"></span>
+            <button class="img-clear-btn" onclick="clearImage(event)" title="Remover imagem">✕</button>
+          </div>
         </div>
       </div>
+      <div class="err-msg" id="giftErrMsg" style="display:none"></div>
     </div>
 
-    <div class="err-msg" id="errMsg" style="display:none"></div>
+    <div class="gifts-grid" id="giftsGrid"></div>
   </div>
 
-  <div class="gifts-grid" id="giftsGrid"></div>
+  <!-- ═══ SECTION: RESTAURANTES ═══ -->
+  <div class="section-panel" id="panel-restaurants">
+    <div class="add-section" style="margin-top:1.5rem">
+      <h3>🍽️ Adicionar Restaurante</h3>
+
+      <div class="input-row" style="margin-bottom:10px">
+        <input class="field-inp" id="restName" type="text" placeholder="Nome do restaurante *" />
+      </div>
+      <div class="input-row" style="margin-bottom:0">
+        <input class="field-inp" id="restLink" type="url" placeholder="Link do Maps (opcional)" />
+      </div>
+
+      <!-- visited toggle -->
+      <div class="toggle-row">
+        <label class="toggle-label" for="restVisitedToggle">Já visitamos?</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="restVisitedToggle" onchange="toggleVisitedForm()" />
+          <span class="toggle-track"></span>
+        </label>
+        <span id="visitedLabel" style="font-size:12px;color:var(--text-muted)">Ainda não</span>
+      </div>
+
+      <!-- stars (shown only if visited) -->
+      <div id="restStarsRow" style="display:none">
+        <div class="stars-row">
+          <label>Nota:</label>
+          <button class="star-btn" data-v="1" onclick="setStar(1)">★</button>
+          <button class="star-btn" data-v="2" onclick="setStar(2)">★</button>
+          <button class="star-btn" data-v="3" onclick="setStar(3)">★</button>
+          <button class="star-btn" data-v="4" onclick="setStar(4)">★</button>
+          <button class="star-btn" data-v="5" onclick="setStar(5)">★</button>
+        </div>
+        <div class="name-row" style="margin-top:8px">
+          <textarea class="field-inp" id="restNoteInp" rows="2" placeholder="Observações (prato favorito, ambiente, etc.)" style="resize:vertical;padding-top:10px;"></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="add-btn" id="addRestBtn" onclick="handleAddRest()">
+          <span id="addRestBtnInner">+ Adicionar</span>
+        </button>
+      </div>
+      <div class="err-msg" id="restErrMsg" style="display:none"></div>
+    </div>
+
+    <div class="rest-list" id="restList"></div>
+  </div>
+
+  <!-- ═══ SECTION: VIAGENS ═══ -->
+  <div class="section-panel" id="panel-travels">
+    <div class="travels-wrap">
+      <div class="travel-add-section">
+        <h3>✈️ Adicionar Destino</h3>
+        <div class="input-row">
+          <input class="field-inp" id="destName" type="text" placeholder="Nome do destino (ex: Lisboa, Portugal)" />
+          <button class="add-btn" id="addDestBtn" onclick="handleAddDest()">+ Destino</button>
+        </div>
+        <div class="err-msg" id="travelErrMsg" style="display:none"></div>
+      </div>
+
+      <div class="destinations-grid" id="destinationsGrid"></div>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script type="module">
   import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, push, remove }
+  import { getDatabase, ref, onValue, push, remove, update }
                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut, onAuthStateChanged }
                               from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -251,14 +471,25 @@
     measurementId:     "G-T1TK5LNNXX"
   };
 
-  const db       = getDatabase(initializeApp(firebaseConfig));
-  const auth     = getAuth();
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth();
   const provider = new GoogleAuthProvider();
 
-  let activeTab = 'mine', giftsData = { mine:{}, hers:{} }, fetching = false;
-  let pendingImage = null; // base64 string
+  // ── State ──
+  let activeSection = 'gifts';
+  let activeGiftTab = 'mine';
+  let giftsData     = { mine:{}, hers:{} };
+  let restaurantsData = {};
+  let travelsData   = {};
+  let fetchingGift  = false;
+  let fetchingRest  = false;
+  let pendingImage  = null;
+  let selectedStars = 0;
 
-  /* ── Auth ── */
+  const DEST_CATS = ['🍜 Culinária','🏛️ Passeios','🎡 Atrações','💡 Dicas','🏨 Hospedagem','🛍️ Compras'];
+
+  // ── Auth ──
   onAuthStateChanged(auth, user => {
     if (user && ALLOWED.includes(user.email)) {
       document.getElementById('loginScreen').style.display = 'none';
@@ -291,16 +522,26 @@
   }
   function showLoginErr(m) { const e=document.getElementById('loginErr'); e.textContent=m; e.style.display=m?'block':'none'; }
 
-  /* ── DB ── */
+  // ── DB Listeners ──
   function startListeners() {
     ['mine','hers'].forEach(tab => {
       onValue(ref(db,`gifts/${tab}`), snap => {
         giftsData[tab] = snap.val() || {};
-        updateCounts();
-        if (activeTab===tab) renderGrid();
+        updateGiftCounts();
+        if (activeGiftTab===tab && activeSection==='gifts') renderGiftsGrid();
         setStatus('connected');
       }, () => setStatus('error'));
     });
+
+    onValue(ref(db,'restaurants'), snap => {
+      restaurantsData = snap.val() || {};
+      if (activeSection==='restaurants') renderRestaurants();
+    }, () => setStatus('error'));
+
+    onValue(ref(db,'travels'), snap => {
+      travelsData = snap.val() || {};
+      if (activeSection==='travels') renderTravels();
+    }, () => setStatus('error'));
   }
 
   function setStatus(s) {
@@ -310,7 +551,23 @@
       s==='connected'?'Sincronizado em tempo real ✓':s==='error'?'Erro de conexão':'Conectando...';
   }
 
-  /* ── Image handling ── */
+  // ── Section nav ──
+  window.setSection = function(s) {
+    activeSection = s;
+    ['gifts','restaurants','travels'].forEach(id => {
+      document.getElementById('nav-'+id).classList.toggle('active', id===s);
+      document.getElementById('panel-'+id).classList.toggle('active', id===s);
+    });
+    if (s==='gifts')       renderGiftsGrid();
+    if (s==='restaurants') renderRestaurants();
+    if (s==='travels')     renderTravels();
+  };
+
+  // ══════════════════════════════════
+  //  PRESENTES
+  // ══════════════════════════════════
+
+  // Image helpers
   function compressImage(file, maxW=600, quality=0.75) {
     return new Promise(resolve => {
       const img = new Image(), reader = new FileReader();
@@ -352,7 +609,6 @@
     document.getElementById('imgFileInput').value        = '';
   };
 
-  /* drag & drop */
   const zone = document.getElementById('dropZone');
   zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
@@ -361,14 +617,12 @@
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) { const b64 = await compressImage(file); setPendingImage(b64, file.name); }
   });
-
-  /* paste anywhere */
   document.addEventListener('paste', async e => {
+    if (activeSection !== 'gifts') return;
     const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
     if (item) { const file = item.getAsFile(); const b64 = await compressImage(file); setPendingImage(b64, 'imagem colada'); }
   });
 
-  /* ── OG fetch ── */
   async function fetchOG(url) {
     const r   = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
     const j   = await r.json();
@@ -380,57 +634,54 @@
     return { title: title.trim().slice(0,120), image };
   }
 
-  /* ── Add ── */
-  window.handleAdd = async function() {
-    if (fetching) return;
-    showError('');
+  window.handleAddGift = async function() {
+    if (fetchingGift) return;
+    showGiftError('');
     let rawUrl = document.getElementById('urlInp').value.trim();
     const customName = document.getElementById('nameInp').value.trim();
-    if (!rawUrl && !customName) { showError('Informe um link ou pelo menos o nome do presente.'); return; }
+    if (!rawUrl && !customName) { showGiftError('Informe um link ou pelo menos o nome do presente.'); return; }
     if (rawUrl && !rawUrl.startsWith('http')) rawUrl = 'https://' + rawUrl;
-    if (rawUrl) { try { new URL(rawUrl); } catch { showError('Link inválido.'); return; } }
+    if (rawUrl) { try { new URL(rawUrl); } catch { showGiftError('Link inválido.'); return; } }
 
-    setLoading(true);
+    setGiftLoading(true);
     let title = customName, image = pendingImage || '';
-
     if (rawUrl) {
       try {
         const og = await fetchOG(rawUrl);
         if (!title) title = og.title || new URL(rawUrl).hostname;
-        if (!image) image = og.image; // only use OG image if no upload
+        if (!image) image = og.image;
       } catch { if (!title) title = rawUrl; }
     }
-
     if (!title) title = 'Presente';
 
     try {
-      await push(ref(db,`gifts/${activeTab}`), { url: rawUrl||'', title, image, addedAt: Date.now() });
+      await push(ref(db,`gifts/${activeGiftTab}`), { url: rawUrl||'', title, image, addedAt: Date.now() });
       document.getElementById('urlInp').value  = '';
       document.getElementById('nameInp').value = '';
       clearImage();
       showToast('Presente adicionado! 🎁');
-    } catch { showError('Erro ao salvar. Verifique sua conexão.'); }
-    setLoading(false);
+    } catch { showGiftError('Erro ao salvar. Verifique sua conexão.'); }
+    setGiftLoading(false);
   };
 
   window.removeGift = async function(key) {
-    try { await remove(ref(db,`gifts/${activeTab}/${key}`)); showToast('Presente removido.'); }
-    catch { showError('Erro ao remover.'); }
+    try { await remove(ref(db,`gifts/${activeGiftTab}/${key}`)); showToast('Presente removido.'); }
+    catch { showGiftError('Erro ao remover.'); }
   };
 
-  window.setTab = function(tab) {
-    activeTab = tab;
+  window.setGiftTab = function(tab) {
+    activeGiftTab = tab;
     document.getElementById('tab-mine').classList.toggle('active', tab==='mine');
     document.getElementById('tab-hers').classList.toggle('active', tab==='hers');
-    document.getElementById('add-title').textContent = tab==='mine'?'Adicionar presente (Caio)':'Adicionar presente (Clarice)';
-    renderGrid();
+    document.getElementById('gift-add-title').textContent = tab==='mine'?'Adicionar presente (Caio)':'Adicionar presente (Clarice)';
+    renderGiftsGrid();
   };
 
-  function renderGrid() {
+  function renderGiftsGrid() {
     const grid   = document.getElementById('giftsGrid');
-    const entries = Object.entries(giftsData[activeTab]).sort((a,b)=>(b[1].addedAt||0)-(a[1].addedAt||0));
+    const entries = Object.entries(giftsData[activeGiftTab]).sort((a,b)=>(b[1].addedAt||0)-(a[1].addedAt||0));
     if (!entries.length) {
-      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${activeTab==='mine'?'💙':'🩷'}</div><p>Nenhum presente ainda</p><span>Cole um link acima para começar a listinha!</span></div>`;
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${activeGiftTab==='mine'?'💙':'🩷'}</div><p>Nenhum presente ainda</p><span>Cole um link acima para começar a listinha!</span></div>`;
       return;
     }
     grid.innerHTML = entries.map(([key,g]) => `
@@ -444,24 +695,268 @@
       </div>`).join('');
   }
 
-  function updateCounts() {
+  function updateGiftCounts() {
     document.getElementById('count-mine').textContent = Object.keys(giftsData.mine).length;
     document.getElementById('count-hers').textContent = Object.keys(giftsData.hers).length;
   }
 
-  function setLoading(on) {
-    fetching = on;
-    document.getElementById('addBtn').disabled = on;
-    document.getElementById('addBtnInner').innerHTML = on ? '<div class="spinner"></div>' : '+ Adicionar';
+  function setGiftLoading(on) {
+    fetchingGift = on;
+    document.getElementById('addGiftBtn').disabled = on;
+    document.getElementById('addGiftBtnInner').innerHTML = on ? '<div class="spinner"></div>' : '+ Adicionar';
   }
-  function showError(m) { const e=document.getElementById('errMsg'); e.textContent=m; e.style.display=m?'block':'none'; }
+  function showGiftError(m) { const e=document.getElementById('giftErrMsg'); e.textContent=m; e.style.display=m?'block':'none'; }
+
+  document.getElementById('urlInp').addEventListener('keydown',  e => e.key==='Enter' && handleAddGift());
+  document.getElementById('nameInp').addEventListener('keydown', e => e.key==='Enter' && handleAddGift());
+
+  // ══════════════════════════════════
+  //  RESTAURANTES
+  // ══════════════════════════════════
+
+  window.toggleVisitedForm = function() {
+    const checked = document.getElementById('restVisitedToggle').checked;
+    document.getElementById('restStarsRow').style.display  = checked ? 'block' : 'none';
+    document.getElementById('visitedLabel').textContent    = checked ? 'Sim!' : 'Ainda não';
+    if (!checked) { selectedStars = 0; renderStars(); }
+  };
+
+  window.setStar = function(v) {
+    selectedStars = v;
+    renderStars();
+  };
+
+  function renderStars() {
+    document.querySelectorAll('.star-btn').forEach(btn => {
+      btn.classList.toggle('on', parseInt(btn.dataset.v) <= selectedStars);
+    });
+  }
+
+  window.handleAddRest = async function() {
+    if (fetchingRest) return;
+    showRestError('');
+    const name    = document.getElementById('restName').value.trim();
+    const link    = document.getElementById('restLink').value.trim();
+    const visited = document.getElementById('restVisitedToggle').checked;
+    const note    = document.getElementById('restNoteInp')?.value.trim() || '';
+
+    if (!name) { showRestError('Informe o nome do restaurante.'); return; }
+
+    setRestLoading(true);
+    try {
+      await push(ref(db,'restaurants'), {
+        name, link: link||'', visited, stars: visited ? selectedStars : 0,
+        note: visited ? note : '', addedAt: Date.now()
+      });
+      document.getElementById('restName').value = '';
+      document.getElementById('restLink').value = '';
+      document.getElementById('restVisitedToggle').checked = false;
+      document.getElementById('restNoteInp').value = '';
+      document.getElementById('restStarsRow').style.display = 'none';
+      document.getElementById('visitedLabel').textContent = 'Ainda não';
+      selectedStars = 0; renderStars();
+      showToast('Restaurante adicionado! 🍽️');
+    } catch { showRestError('Erro ao salvar.'); }
+    setRestLoading(false);
+  };
+
+  window.removeRest = async function(key) {
+    try { await remove(ref(db,`restaurants/${key}`)); showToast('Restaurante removido.'); }
+    catch { showRestError('Erro ao remover.'); }
+  };
+
+  window.openNoteEditor = function(key) {
+    const existing = restaurantsData[key];
+    const editorId = `note-editor-${key}`;
+    let editorEl = document.getElementById(editorId);
+    if (editorEl) { editorEl.remove(); return; } // toggle
+
+    const card = document.querySelector(`[data-rest-key="${key}"]`);
+    if (!card) return;
+
+    const div = document.createElement('div');
+    div.className = 'note-editor'; div.id = editorId;
+
+    // build a mini star row too
+    const curStars = existing?.stars || 0;
+    let editStars = curStars;
+    div.innerHTML = `
+      <div class="stars-row" id="editor-stars-${key}">
+        <label>Nota:</label>
+        ${[1,2,3,4,5].map(v=>`<button class="star-btn ${v<=curStars?'on':''}" onclick="setEditorStar('${key}',${v})"  style="font-size:18px">★</button>`).join('')}
+      </div>
+      <textarea id="note-ta-${key}" placeholder="Escreva uma nota sobre este restaurante...">${escH(existing?.note||'')}</textarea>
+      <div class="note-editor-actions">
+        <button class="note-cancel-btn" onclick="document.getElementById('note-editor-${key}').remove()">Cancelar</button>
+        <button class="note-save-btn" onclick="saveNote('${key}')">Salvar</button>
+      </div>`;
+    card.appendChild(div);
+  };
+
+  window.setEditorStar = function(key, v) {
+    const row = document.getElementById(`editor-stars-${key}`);
+    row.querySelectorAll('.star-btn').forEach(btn => btn.classList.toggle('on', parseInt(btn.textContent)==='★' && [...row.querySelectorAll('.star-btn')].indexOf(btn) < v));
+    row.dataset.stars = v;
+  };
+
+  window.saveNote = async function(key) {
+    const ta   = document.getElementById(`note-ta-${key}`);
+    const row  = document.getElementById(`editor-stars-${key}`);
+    const note = ta?.value.trim() || '';
+    const stars = parseInt(row?.dataset.stars || row?.querySelectorAll('.star-btn.on').length || 0);
+    const visited = true;
+    try {
+      await update(ref(db,`restaurants/${key}`), { note, stars, visited });
+      document.getElementById(`note-editor-${key}`)?.remove();
+      showToast('Nota salva! ⭐');
+    } catch { showToast('Erro ao salvar nota.'); }
+  };
+
+  function renderRestaurants() {
+    const list = document.getElementById('restList');
+    const entries = Object.entries(restaurantsData).sort((a,b)=>(b[1].addedAt||0)-(a[1].addedAt||0));
+    if (!entries.length) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">🍽️</div><p>Nenhum restaurante ainda</p><span>Adicione um restaurante para começar!</span></div>`;
+      return;
+    }
+    list.innerHTML = entries.map(([key,r]) => {
+      const starsHtml = r.visited && r.stars ? '★'.repeat(r.stars) + '☆'.repeat(5-r.stars) : '';
+      return `
+      <div class="rest-card" data-rest-key="${key}">
+        <div class="rest-icon">${r.visited ? '✅' : '📍'}</div>
+        <div class="rest-body">
+          <div class="rest-name">${escH(r.name)}</div>
+          <div class="rest-meta">
+            <span class="rest-badge ${r.visited?'visited':'unvisited'}">${r.visited?'✓ Já fomos':'Quero ir'}</span>
+            ${starsHtml ? `<span class="rest-stars">${starsHtml}</span>` : ''}
+          </div>
+          ${r.note ? `<div class="rest-note">"${escH(r.note)}"</div>` : ''}
+          ${r.link ? `<a class="rest-link" href="${escH(r.link)}" target="_blank" onclick="event.stopPropagation()">📍 Ver no Maps</a>` : ''}
+        </div>
+        <div class="rest-actions">
+          <button class="rest-del-btn" onclick="removeRest('${key}')" title="Remover">🗑️</button>
+          <button class="rest-note-btn" onclick="openNoteEditor('${key}')">✏️ Nota</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function setRestLoading(on) {
+    fetchingRest = on;
+    document.getElementById('addRestBtn').disabled = on;
+    document.getElementById('addRestBtnInner').innerHTML = on ? '<div class="spinner"></div>' : '+ Adicionar';
+  }
+  function showRestError(m) { const e=document.getElementById('restErrMsg'); e.textContent=m; e.style.display=m?'block':'none'; }
+
+  document.getElementById('restName').addEventListener('keydown', e => e.key==='Enter' && handleAddRest());
+
+  // ══════════════════════════════════
+  //  VIAGENS
+  // ══════════════════════════════════
+
+  window.handleAddDest = async function() {
+    const name = document.getElementById('destName').value.trim();
+    if (!name) { document.getElementById('travelErrMsg').textContent='Informe o nome do destino.'; document.getElementById('travelErrMsg').style.display='block'; return; }
+    document.getElementById('travelErrMsg').style.display='none';
+    try {
+      const cats = {};
+      DEST_CATS.forEach(c => { cats[btoa(encodeURIComponent(c)).slice(0,12)] = { label: c, items: {} }; });
+      await push(ref(db,'travels'), { name, cats, addedAt: Date.now() });
+      document.getElementById('destName').value = '';
+      showToast('Destino adicionado! ✈️');
+    } catch { document.getElementById('travelErrMsg').textContent='Erro ao salvar.'; document.getElementById('travelErrMsg').style.display='block'; }
+  };
+
+  window.removeDest = async function(key) {
+    try { await remove(ref(db,`travels/${key}`)); showToast('Destino removido.'); }
+    catch { showToast('Erro ao remover.'); }
+  };
+
+  window.addDestItem = async function(destKey, catKey) {
+    const inp = document.getElementById(`inp-${destKey}-${catKey}`);
+    const text = inp?.value.trim();
+    if (!text) return;
+    try {
+      await push(ref(db,`travels/${destKey}/cats/${catKey}/items`), { text, addedAt: Date.now() });
+      inp.value = '';
+    } catch { showToast('Erro ao adicionar item.'); }
+  };
+
+  window.removeDestItem = async function(destKey, catKey, itemKey) {
+    try { await remove(ref(db,`travels/${destKey}/cats/${catKey}/items/${itemKey}`)); }
+    catch { showToast('Erro ao remover.'); }
+  };
+
+  // active cat per dest (in-memory)
+  const activeCats = {};
+
+  window.setDestCat = function(destKey, catKey) {
+    activeCats[destKey] = catKey;
+    renderDestCard(destKey);
+  };
+
+  function renderDestCard(destKey) {
+    const dest = travelsData[destKey];
+    if (!dest) return;
+    const cardEl = document.querySelector(`[data-dest-key="${destKey}"]`);
+    if (!cardEl) return;
+    cardEl.innerHTML = buildDestCardInner(destKey, dest);
+  }
+
+  function buildDestCardInner(destKey, dest) {
+    const cats = dest.cats || {};
+    const catKeys = Object.keys(cats);
+    if (!catKeys.length) return `<div class="empty-cats">Sem categorias.</div>`;
+    const activeCat = activeCats[destKey] || catKeys[0];
+
+    const tabsHtml = catKeys.map(ck => `
+      <button class="dest-cat-btn ${ck===activeCat?'active':''}" onclick="setDestCat('${destKey}','${ck}')">
+        ${escH(cats[ck].label||ck)}
+      </button>`).join('');
+
+    const items = cats[activeCat]?.items || {};
+    const itemsHtml = Object.entries(items).sort((a,b)=>(a[1].addedAt||0)-(b[1].addedAt||0)).map(([ik,it]) => `
+      <div class="dest-item">
+        <div class="dest-item-dot"></div>
+        <div class="dest-item-text">${escH(it.text)}</div>
+        <button class="dest-item-del" onclick="removeDestItem('${destKey}','${activeCat}','${ik}')">✕</button>
+      </div>`).join('') || `<div style="padding:12px 0;font-size:12px;color:var(--text-muted)">Nenhum item ainda.</div>`;
+
+    return `
+      <div class="dest-cats">${tabsHtml}</div>
+      <div class="dest-items">
+        ${itemsHtml}
+        <div class="dest-add-item">
+          <input class="dest-add-input" id="inp-${destKey}-${activeCat}" type="text" placeholder="Adicionar item..." onkeydown="event.key==='Enter'&&addDestItem('${destKey}','${activeCat}')" />
+          <button class="dest-add-input-btn" onclick="addDestItem('${destKey}','${activeCat}')">＋</button>
+        </div>
+      </div>`;
+  }
+
+  function renderTravels() {
+    const grid = document.getElementById('destinationsGrid');
+    const entries = Object.entries(travelsData).sort((a,b)=>(a[1].addedAt||0)-(b[1].addedAt||0));
+    if (!entries.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">✈️</div><p>Nenhum destino ainda</p><span>Adicione um destino acima para começar!</span></div>`;
+      return;
+    }
+    grid.innerHTML = entries.map(([key,dest]) => `
+      <div class="dest-card" data-dest-key="${key}">
+        <div class="dest-header">
+          <span class="dest-name">📍 ${escH(dest.name)}</span>
+          <button class="dest-del" onclick="removeDest('${key}')">Remover</button>
+        </div>
+        ${buildDestCardInner(key, dest)}
+      </div>`).join('');
+  }
+
+  document.getElementById('destName').addEventListener('keydown', e => e.key==='Enter' && handleAddDest());
+
+  // ── Shared utils ──
   function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
   function domain(u)    { try{return new URL(u).hostname.replace('www.','')}catch{return ''} }
   function esc(s)       { return String(s||'').replace(/'/g,"\\'") }
   function escH(s)      { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
-
-  document.getElementById('urlInp').addEventListener('keydown',  e => e.key==='Enter' && handleAdd());
-  document.getElementById('nameInp').addEventListener('keydown', e => e.key==='Enter' && handleAdd());
 </script>
 </body>
 </html>
