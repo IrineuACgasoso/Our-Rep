@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎁 Nossa Lista de Presentes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --salmon:       #E8856A;
+      --salmon-light: #F4A591;
+      --salmon-pale:  #FAD5C9;
+      --salmon-bg:    #FDF0EC;
+      --salmon-card:  #FFF8F6;
+      --salmon-dark:  #C05A42;
+      --salmon-deep:  #8B3A24;
+      --text:         #3D1A0E;
+      --text-muted:   #C09080;
+      --white:        #FFFAF8;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--salmon-bg);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    header {
+      background: linear-gradient(135deg, #E8856A 0%, #F4A591 55%, #F9C4B3 100%);
+      padding: 2.5rem 1.5rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    header h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(24px, 5vw, 36px);
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.5px;
+      text-shadow: 0 2px 8px rgba(120,40,10,0.15);
+      position: relative;
+    }
+    header p {
+      color: rgba(255,255,255,0.82);
+      font-size: 14px;
+      margin-top: 6px;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+      position: relative;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 1.5rem;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.3s;
+    }
+    .status-bar.connected { color: #3a9e6e; }
+    .status-bar.connected .status-dot { background: #3a9e6e; animation: pulse 2s infinite; }
+    .status-bar.error { color: var(--salmon-dark); }
+    .status-bar.error .status-dot { background: var(--salmon-dark); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .tabs-wrap {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      padding: 0.8rem 1.5rem 0.5rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      font-family: 'Nunito', sans-serif;
+      padding: 10px 28px;
+      border-radius: 50px;
+      border: 2px solid var(--salmon);
+      background: transparent;
+      color: var(--salmon-dark);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.22s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      background: var(--salmon);
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(232,133,106,0.38);
+      transform: translateY(-1px);
+    }
+    .tab-btn:hover:not(.active) { background: var(--salmon-pale); }
+    .tab-count {
+      background: rgba(255,255,255,0.28);
+      border-radius: 50px;
+      padding: 1px 9px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .tab-btn:not(.active) .tab-count { background: var(--salmon-pale); color: var(--salmon-dark); }
+
+    .add-section {
+      margin: 1rem 1.5rem 0;
+      background: var(--white);
+      border-radius: 18px;
+      padding: 1.4rem 1.5rem;
+      border: 1.5px solid var(--salmon-pale);
+      box-shadow: 0 4px 20px rgba(232,133,106,0.08);
+    }
+    .add-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      color: var(--salmon-deep);
+      margin-bottom: 1rem;
+    }
+    .input-row { display: flex; gap: 8px; align-items: stretch; }
+    .url-input {
+      flex: 1;
+      padding: 11px 16px;
+      border-radius: 12px;
+      border: 1.5px solid var(--salmon-pale);
+      background: var(--salmon-bg);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border .2s, box-shadow .2s;
+    }
+    .url-input:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px rgba(232,133,106,.15); }
+    .url-input::placeholder { color: var(--text-muted); }
+    .add-btn {
+      padding: 11px 22px;
+      border-radius: 12px;
+      border: none;
+      background: var(--salmon);
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 110px;
+    }
+    .add-btn:hover { background: var(--salmon-dark); transform: translateY(-1px); }
+    .add-btn:disabled { background: var(--salmon-light); cursor: not-allowed; transform: none; }
+    .name-row { display: flex; gap: 8px; margin-top: 10px; }
+    .name-inp {
+      flex: 1;
+      padding: 9px 14px;
+      border-radius: 12px;
+      border: 1.5px solid var(--salmon-pale);
+      background: var(--salmon-bg);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border .2s, box-shadow .2s;
+    }
+    .name-inp:focus { border-color: var(--salmon); box-shadow: 0 0 0 3px rgba(232,133,106,.15); }
+    .name-inp::placeholder { color: var(--text-muted); }
+    .err-msg {
+      color: var(--salmon-dark);
+      font-size: 12px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: #fdeae4;
+      border-radius: 8px;
+      border-left: 3px solid var(--salmon);
+    }
+
+    .gifts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 16px;
+      padding: 1.5rem;
+    }
+
+    .gift-card {
+      background: var(--salmon-card);
+      border-radius: 16px;
+      border: 1.5px solid var(--salmon-pale);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease;
+      position: relative;
+      animation: fadeUp .35s ease both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .gift-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(232,133,106,.22); }
+    .gift-img { width:100%; height:150px; object-fit:cover; display:block; background:var(--salmon-pale); }
+    .gift-img-placeholder {
+      width:100%; height:150px;
+      background: linear-gradient(135deg, var(--salmon-pale), var(--salmon-light));
+      display:flex; align-items:center; justify-content:center; font-size:44px;
+    }
+    .gift-info { padding: 12px 14px 14px; }
+    .gift-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .gift-domain { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .del-btn {
+      position:absolute; top:8px; right:8px;
+      width:26px; height:26px; border-radius:50%; border:none;
+      background:rgba(255,255,255,.9); color:var(--salmon-dark); font-size:12px;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      opacity:0; transition:opacity .2s, background .2s;
+    }
+    .gift-card:hover .del-btn { opacity:1; }
+    .del-btn:hover { background:var(--salmon); color:#fff; }
+
+    .empty-state { grid-column:1/-1; text-align:center; padding:4rem 1.5rem; }
+    .empty-icon { font-size:56px; margin-bottom:14px; }
+    .empty-state p { font-family:'Playfair Display',serif; font-size:18px; color:var(--salmon-dark); }
+    .empty-state span { font-size:13px; color:var(--text-muted); display:block; margin-top:6px; }
+
+    .spinner {
+      width:16px; height:16px;
+      border:2.5px solid rgba(255,255,255,.4); border-top-color:#fff;
+      border-radius:50%; animation:spin .65s linear infinite; flex-shrink:0;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .toast {
+      position:fixed; bottom:24px; left:50%;
+      transform:translateX(-50%) translateY(20px);
+      background:var(--salmon-deep); color:#fff;
+      padding:10px 22px; border-radius:50px; font-size:13px; font-weight:500;
+      opacity:0; transition:all .3s ease; pointer-events:none; z-index:100; white-space:nowrap;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    @media(max-width:480px){
+      .gifts-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;padding:1rem;}
+      .add-section{margin:1rem;padding:1.2rem;}
+      .tab-btn{padding:9px 20px;font-size:13px;}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎁 Nossa Lista de Presentes</h1>
+  <p>nossa listinha de desejinhos</p>
+</header>
+
+<div class="status-bar" id="statusBar">
+  <div class="status-dot"></div>
+  <span id="statusText">Conectando...</span>
+</div>
+
+<div class="tabs-wrap">
+  <button class="tab-btn active" id="tab-mine" onclick="setTab('mine')">
+    💙 Meus Presentes <span class="tab-count" id="count-mine">0</span>
+  </button>
+  <button class="tab-btn" id="tab-hers" onclick="setTab('hers')">
+    🩷 Dela <span class="tab-count" id="count-hers">0</span>
+  </button>
+</div>
+
+<div class="add-section">
+  <h3 id="add-title">Adicionar presente (meu)</h3>
+  <div class="input-row">
+    <input class="url-input" id="urlInp" type="url" placeholder="Cole o link do presente aqui..." autocomplete="off" />
+    <button class="add-btn" id="addBtn" onclick="handleAdd()">
+      <span id="addBtnInner">+ Adicionar</span>
+    </button>
+  </div>
+  <div class="name-row">
+    <input class="name-inp" id="nameInp" type="text" placeholder="Nome personalizado (opcional)" />
+  </div>
+  <div class="err-msg" id="errMsg" style="display:none"></div>
+</div>
+
+<div class="gifts-grid" id="giftsGrid"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, push, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyBduG0oZnA__HxcvQ16f7wC2TlcSgGEuBQ",
+    authDomain:        "present-list-98062.firebaseapp.com",
+    databaseURL:       "https://present-list-98062-default-rtdb.firebaseio.com",
+    projectId:         "present-list-98062",
+    storageBucket:     "present-list-98062.firebasestorage.app",
+    messagingSenderId: "315312791192",
+    appId:             "1:315312791192:web:a05e8eeed46fb867db7aed",
+    measurementId:     "G-T1TK5LNNXX"
+  };
+
+  const db = getDatabase(initializeApp(firebaseConfig));
+
+  let activeTab = 'mine';
+  let giftsData = { mine: {}, hers: {} };
+  let fetching  = false;
+
+  function setStatus(s) {
+    const bar = document.getElementById('statusBar');
+    bar.className = 'status-bar ' + s;
+    document.getElementById('statusText').textContent =
+      s === 'connected' ? 'Sincronizado em tempo real ✓'
+      : s === 'error'   ? 'Erro de conexão'
+      :                   'Conectando...';
+  }
+
+  function listenTab(tab) {
+    onValue(ref(db, `gifts/${tab}`), snap => {
+      giftsData[tab] = snap.val() || {};
+      updateCounts();
+      if (activeTab === tab) renderGrid();
+      setStatus('connected');
+    }, () => setStatus('error'));
+  }
+  listenTab('mine');
+  listenTab('hers');
+
+  async function fetchOG(url) {
+    const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+                          { signal: AbortSignal.timeout(8000) });
+    const j = await r.json();
+    const doc = new DOMParser().parseFromString(j.contents || '', 'text/html');
+    const base = new URL(url);
+    let title = doc.querySelector('meta[property="og:title"]')?.content
+              || doc.querySelector('title')?.textContent || '';
+    let image = doc.querySelector('meta[property="og:image"]')?.content || '';
+    if (image && image.startsWith('/')) image = base.origin + image;
+    return { title: title.trim().slice(0, 120), image };
+  }
+
+  window.handleAdd = async function () {
+    if (fetching) return;
+    showError('');
+    let rawUrl = document.getElementById('urlInp').value.trim();
+    const customName = document.getElementById('nameInp').value.trim();
+    if (!rawUrl) { showError('Cole um link para continuar.'); return; }
+    if (!rawUrl.startsWith('http')) rawUrl = 'https://' + rawUrl;
+    let urlObj;
+    try { urlObj = new URL(rawUrl); } catch { showError('Link inválido.'); return; }
+
+    setLoading(true);
+    let title = customName, image = '';
+    try {
+      const og = await fetchOG(rawUrl);
+      if (!title) title = og.title || urlObj.hostname;
+      image = og.image;
+    } catch { if (!title) title = urlObj.hostname; }
+
+    try {
+      await push(ref(db, `gifts/${activeTab}`), { url: rawUrl, title, image, addedAt: Date.now() });
+      document.getElementById('urlInp').value = '';
+      document.getElementById('nameInp').value = '';
+      showToast('Presente adicionado! 🎁');
+    } catch { showError('Erro ao salvar. Verifique sua conexão.'); }
+    setLoading(false);
+  };
+
+  window.removeGift = async function (key) {
+    try { await remove(ref(db, `gifts/${activeTab}/${key}`)); showToast('Presente removido.'); }
+    catch { showError('Erro ao remover.'); }
+  };
+
+  window.setTab = function (tab) {
+    activeTab = tab;
+    document.getElementById('tab-mine').classList.toggle('active', tab === 'mine');
+    document.getElementById('tab-hers').classList.toggle('active', tab === 'hers');
+    document.getElementById('add-title').textContent =
+      tab === 'mine' ? 'Adicionar presente (meu)' : 'Adicionar presente (dela)';
+    renderGrid();
+  };
+
+  function renderGrid() {
+    const grid   = document.getElementById('giftsGrid');
+    const entries = Object.entries(giftsData[activeTab])
+                          .sort((a, b) => (b[1].addedAt || 0) - (a[1].addedAt || 0));
+    if (!entries.length) {
+      grid.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">${activeTab === 'mine' ? '💙' : '🩷'}</div>
+        <p>Nenhum presente ainda</p>
+        <span>Cole um link acima para começar a listinha!</span>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = entries.map(([key, g]) => `
+      <div class="gift-card" onclick="window.open('${esc(g.url)}','_blank')">
+        ${g.image
+          ? `<img class="gift-img" src="${escH(g.image)}" alt=""
+               onerror="this.outerHTML='<div class=gift-img-placeholder>🎁</div>'">`
+          : `<div class="gift-img-placeholder">🎁</div>`}
+        <div class="gift-info">
+          <div class="gift-title">${escH(g.title)}</div>
+          <div class="gift-domain">${escH(domain(g.url))}</div>
+        </div>
+        <button class="del-btn" onclick="event.stopPropagation();removeGift('${key}')" title="Remover">✕</button>
+      </div>`).join('');
+  }
+
+  function updateCounts() {
+    document.getElementById('count-mine').textContent = Object.keys(giftsData.mine).length;
+    document.getElementById('count-hers').textContent = Object.keys(giftsData.hers).length;
+  }
+
+  function setLoading(on) {
+    fetching = on;
+    document.getElementById('addBtn').disabled = on;
+    document.getElementById('addBtnInner').innerHTML = on ? '<div class="spinner"></div>' : '+ Adicionar';
+  }
+  function showError(m) { const e = document.getElementById('errMsg'); e.textContent=m; e.style.display=m?'block':'none'; }
+  function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+  function domain(u)  { try{return new URL(u).hostname.replace('www.','')}catch{return ''} }
+  function esc(s)     { return String(s||'').replace(/'/g,"\\'") }
+  function escH(s)    { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+  document.getElementById('urlInp').addEventListener('keydown',  e => e.key==='Enter' && handleAdd());
+  document.getElementById('nameInp').addEventListener('keydown', e => e.key==='Enter' && handleAdd());
+</script>
+</body>
+</html>
