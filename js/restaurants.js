@@ -172,6 +172,14 @@ async function handleAddRest() {
   setRestLoading(false);
 }
 
+// Nova função de confirmação de remoção genérica
+async function confirmAndRemove({ key, message, remover }) {
+  if (confirm(message || "Tem certeza que deseja remover? Esta ação não pode ser desfeita.")) {
+    await remover(key);
+  }
+}
+
+// Modificado para colocar confirmação
 async function removeRest(key) {
   try {
     await remove(ref(db, `restaurants/${key}`));
@@ -322,8 +330,18 @@ export function renderRestaurants() {
   list.querySelectorAll('[data-rest-edit]').forEach(btn => {
     btn.addEventListener('click', () => openRestEditor(btn.dataset.restEdit, 'edit'));
   });
+  // Adicionando confirmação na exclusão do restaurante
   list.querySelectorAll('[data-rest-del]').forEach(btn => {
-    btn.addEventListener('click', () => removeRest(btn.dataset.restDel));
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.restDel;
+      const rest = state.restaurantsData[key];
+      const restName = rest?.name ? `(${rest.name})` : '';
+      confirmAndRemove({
+        key,
+        message: `Tem certeza que deseja remover este restaurante ${restName}? Esta ação não pode ser desfeita.`,
+        remover: async (k) => await removeRest(k)
+      });
+    });
   });
 }
 

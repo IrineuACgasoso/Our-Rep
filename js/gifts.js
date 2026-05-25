@@ -3,6 +3,9 @@ import { db } from './firebase.js';
 import { state } from './state.js';
 import { showToast, escH, domain, compressImage } from './utils.js';
 
+/**
+ * Função para buscar OpenGraph (título e imagem) a partir de uma URL.
+ */
 async function fetchOG(url) {
   const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
   const j = await r.json();
@@ -48,12 +51,16 @@ export function updateGiftCounts() {
   document.getElementById('count-hers').textContent = Object.keys(state.giftsData.hers).length;
 }
 
+// ---------------------------------
+// DROPZONE PARA O EDITOR (inline)
+// ---------------------------------
 function bindGiftEditorImage(editorEl, existingImage) {
   const input = editorEl.querySelector('[data-edit-img-input]');
   const prompt = editorEl.querySelector('[data-edit-img-prompt]');
   const preview = editorEl.querySelector('[data-edit-img-preview]');
   const imgEl = editorEl.querySelector('[data-edit-img-el]');
   const clearBtn = editorEl.querySelector('[data-edit-img-clear]');
+  const dropZone = editorEl.querySelector('[data-edit-img-dropzone]');
 
   if (existingImage) {
     editorEl.dataset.newImage = existingImage;
@@ -71,6 +78,7 @@ function bindGiftEditorImage(editorEl, existingImage) {
     preview.style.display = 'block';
     imgEl.src = b64;
   });
+
   clearBtn?.addEventListener('click', e => {
     e.stopPropagation();
     delete editorEl.dataset.newImage;
@@ -79,6 +87,38 @@ function bindGiftEditorImage(editorEl, existingImage) {
     imgEl.src = '';
     input.value = '';
   });
+
+  // Se for dropzone inline
+  if (dropZone) {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', async e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f?.type.startsWith('image/')) {
+        const b64 = await compressImage(f);
+        editorEl.dataset.newImage = b64;
+        prompt.style.display = 'none';
+        preview.style.display = 'block';
+        imgEl.src = b64;
+        input.value = ''; // Limpa input visível
+      }
+    });
+
+    // Cola de imagem
+    dropZone.addEventListener('paste', async e => {
+      const item = [...e.clipboardData.items].find(i => i.type.startsWith('image/'));
+      if (item) {
+        const b64 = await compressImage(item.getAsFile());
+        editorEl.dataset.newImage = b64;
+        prompt.style.display = 'none';
+        preview.style.display = 'block';
+        imgEl.src = b64;
+        input.value = '';
+      }
+    });
+  }
 }
 
 function openGiftEditor(key) {
@@ -99,9 +139,9 @@ function openGiftEditor(key) {
     <div class="editor-row">
       <input class="field-inp" type="text" id="edit-gift-title-${key}" value="${escH(g.title)}" placeholder="Nome do presente *" style="width:100%" />
     </div>
-    <div class="img-drop-zone" style="margin-top:8px">
+    <div class="img-drop-zone" data-edit-img-dropzone style="margin-top:8px">
       <input type="file" accept="image/*" data-edit-img-input />
-      <div data-edit-img-prompt><p>📷 Trocar foto</p><span>Deixe em branco para manter a atual</span></div>
+      <div data-edit-img-prompt><p>📷 Trocar foto</p><span>Arraste ou cole sua foto, ou clique para escolher arquivo.<br>Deixe em branco para manter a atual</span></div>
       <div data-edit-img-preview style="display:none"><div class="img-preview-wrap">
         <img class="img-preview" data-edit-img-el alt="" />
         <button type="button" class="img-clear-btn" data-edit-img-clear>✕</button>
@@ -114,6 +154,16 @@ function openGiftEditor(key) {
 
   card.appendChild(div);
   bindGiftEditorImage(div, g.image || '');
+
+  // Para permitir clicar na zona e acionar o input de arquivo
+  const dropZone = div.querySelector('[data-edit-img-dropzone]');
+  const fileInput = div.querySelector('[data-edit-img-input]');
+  dropZone?.addEventListener('click', e => {
+    // Não acionar se clicar no botão clear, para não abrir o file chooser
+    if (e.target.closest('.img-clear-btn')) return;
+    fileInput?.click();
+  });
+
   div.querySelector(`[data-gift-cancel="${key}"]`).addEventListener('click', e => { e.stopPropagation(); openGiftEditor(key); });
   div.querySelector(`[data-gift-save="${key}"]`).addEventListener('click', e => { e.stopPropagation(); saveGiftEditor(key); });
 }
@@ -134,6 +184,10 @@ async function saveGiftEditor(key) {
   }
 }
 
+/**
+ * Renderiza o grid dos presentes, colocando o botão de edição no lado oposto do delete,
+ * e adiciona confirmação de remoção.
+ */
 export function renderGiftsGrid() {
   const grid = document.getElementById('giftsGrid');
   const entries = Object.entries(state.giftsData[state.activeGiftTab])
@@ -142,10 +196,12 @@ export function renderGiftsGrid() {
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${state.activeGiftTab === 'mine' ? '💙' : '🩷'}</div><p>Nenhum presente ainda</p><span>Cole um link acima para começar!</span></div>`;
     return;
   }
+  // Botão de edição agora à esquerda e delete à direita
   grid.innerHTML = entries.map(([key, g]) => `
     <div class="gift-card" data-gift-key="${key}">
       <div class="card-top-actions">
         <button type="button" class="edit-btn" data-gift-edit="${key}" title="Editar">✏️</button>
+        <span class="spacer" style="flex:1"></span>
         <button type="button" class="del-btn" data-gift-del="${key}" title="Remover">✕</button>
       </div>
       ${g.image ? `<img class="gift-img" src="${escH(g.image)}" alt="" onerror="this.outerHTML='<div class=gift-img-placeholder>🎁</div>'">` : `<div class="gift-img-placeholder">🎁</div>`}
@@ -167,7 +223,13 @@ export function renderGiftsGrid() {
     btn.addEventListener('click', e => { e.stopPropagation(); openGiftEditor(btn.dataset.giftEdit); });
   });
   grid.querySelectorAll('[data-gift-del]').forEach(btn => {
-    btn.addEventListener('click', e => { e.stopPropagation(); removeGift(btn.dataset.giftDel); });
+    btn.addEventListener('click', e => { 
+      e.stopPropagation(); 
+      // Confirmação simples via window.confirm antes de remover
+      if (confirm('Tem certeza que deseja remover este presente?')) {
+        removeGift(btn.dataset.giftDel);
+      }
+    });
   });
 }
 
@@ -212,6 +274,10 @@ async function handleAddGift() {
   setGiftLoading(false);
 }
 
+/**
+ * Remove presente do banco após confirmação.
+ * @param {string} key
+ */
 async function removeGift(key) {
   try {
     await remove(ref(db, `gifts/${state.activeGiftTab}/${key}`));

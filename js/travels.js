@@ -40,37 +40,94 @@ function itemDbPath(travelKey, catKey, itemKey) {
   return `travels/${travelKey}/cats/${pathKey}/items/${itemKey}`;
 }
 
-/** Vincula upload de imagem num editor inline */
+/** Vincula upload de imagem num editor inline e habilita drag&drop + ctrl+v/copy */
 function bindEditorImage(editorEl, existingImage = '') {
   const input = editorEl.querySelector('[data-edit-img-input]');
   const prompt = editorEl.querySelector('[data-edit-img-prompt]');
   const preview = editorEl.querySelector('[data-edit-img-preview]');
   const imgEl = editorEl.querySelector('[data-edit-img-el]');
   const clearBtn = editorEl.querySelector('[data-edit-img-clear]');
+  const dropZone = editorEl.querySelector('.img-drop-zone') || editorEl; // fallback
 
-  if (existingImage) {
-    editorEl.dataset.newImage = existingImage;
-    if (prompt) prompt.style.display = 'none';
-    if (preview) preview.style.display = 'block';
-    if (imgEl) imgEl.src = existingImage;
-  }
-
-  input?.addEventListener('change', async () => {
-    const f = input.files[0];
-    if (!f) return;
-    const b64 = await compressImage(f);
+  function showImg(b64) {
     editorEl.dataset.newImage = b64;
     if (prompt) prompt.style.display = 'none';
     if (preview) preview.style.display = 'block';
     if (imgEl) imgEl.src = b64;
-  });
-  clearBtn?.addEventListener('click', e => {
-    e.stopPropagation();
+  }
+
+  function clearImg() {
     editorEl.dataset.newImage = '';
     if (prompt) prompt.style.display = 'block';
     if (preview) preview.style.display = 'none';
     if (imgEl) imgEl.src = '';
-    input.value = '';
+    if (input) input.value = '';
+  }
+
+  if (existingImage) {
+    showImg(existingImage);
+  } else {
+    clearImg();
+  }
+
+  // File change
+  input?.addEventListener('change', async () => {
+    const f = input.files[0];
+    if (!f) return;
+    const b64 = await compressImage(f);
+    showImg(b64);
+  });
+
+  clearBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    clearImg();
+  });
+
+  // Drag & drop support
+  if (dropZone) {
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', async e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const f = e.dataTransfer?.files?.[0];
+      if (f && f.type.startsWith('image/')) {
+        showImg(await compressImage(f));
+      }
+    });
+  }
+
+  // Paste/ctrl+v/copy support
+  editorEl.addEventListener('paste', async e => {
+    if (!e.clipboardData) return;
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          showImg(await compressImage(file));
+          e.preventDefault();
+          return;
+        }
+      }
+      // Allow copy/paste of image URLs (not just files)
+      if (item.kind === 'string' && item.type === 'text/plain') {
+        item.getAsString(async str => {
+          if (/^data:image\/|^https?:\/\/.*\.(jpg|jpeg|png|gif|webp)$/i.test(str.trim())) {
+            showImg(str.trim());
+            e.preventDefault();
+            return;
+          }
+        });
+      }
+    }
   });
 }
 
@@ -151,6 +208,94 @@ function clearDestCover() {
   document.getElementById('destCoverPreviewImg').src = '';
   document.getElementById('destCoverInput').value = '';
 }
+
+// DRAG & DROP and CTRL+V support for adição de presente / capa do destino
+
+(function setupCoverDropArea() {
+  // called only once on first usage
+  let coverDropArea;
+
+  // debounce helper for pasting
+  let lastPaste = 0;
+
+  function setImageFromFile(f) {
+    if (f && f.type && f.type.startsWith('image/')) {
+      compressImage(f).then(b64 => setDestCoverPreview(b64, f.name));
+    }
+  }
+
+  function setImageFromUrl(url) {
+    setDestCoverPreview(url, 'imagem');
+  }
+
+  function onDrop(e) {
+    e.preventDefault();
+    coverDropArea.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f) setImageFromFile(f);
+  }
+
+  function onPaste(e) {
+    if (Date.now() - lastPaste < 50) return; // prevent double fires
+    lastPaste = Date.now();
+    let handled = false;
+
+    if (!e.clipboardData) return;
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        setImageFromFile(file);
+        handled = true;
+        break;
+      }
+      if (item.kind === 'string' && item.type === 'text/plain') {
+        item.getAsString(str => {
+          str = str.trim();
+          if (/^data:image\/|^https?:\/\/.*\.(jpg|jpeg|png|gif|webp)$/i.test(str)) {
+            setImageFromUrl(str);
+          }
+        });
+        handled = true;
+        break;
+      }
+    }
+
+    if (handled) e.preventDefault();
+  }
+
+  // Allow user to click on preview image to reselect image
+  function onClickPreview(e) {
+    const input = document.getElementById('destCoverInput');
+    input?.click();
+  }
+
+  // Add listeners at DOMContentLoaded (initTravels)
+  function activateCoverDropArea() {
+    coverDropArea = document.getElementById('destCoverDrop');
+    if (!coverDropArea) return;
+    // drag&drop
+    coverDropArea.addEventListener('dragover', e => { e.preventDefault(); coverDropArea.classList.add('drag-over'); });
+    coverDropArea.addEventListener('dragleave', () => coverDropArea.classList.remove('drag-over'));
+    coverDropArea.addEventListener('drop', onDrop);
+
+    // paste (ctrl+v)
+    coverDropArea.addEventListener('paste', onPaste);
+    // let user paste everywhere in add-destination section
+    const section = document.getElementById('addDestSection');
+    if (section) section.addEventListener('paste', onPaste);
+    // click on preview image = upload again
+    document.getElementById('destCoverPreviewImg')?.addEventListener('click', onClickPreview);
+  }
+
+  // Immediately activate on module load, but will be safe if missing
+  if (document.readyState === "loading") {
+    document.addEventListener('DOMContentLoaded', activateCoverDropArea);
+  } else {
+    activateCoverDropArea();
+  }
+})();
 
 async function handleAddDest() {
   const name = document.getElementById('destName').value.trim();
@@ -282,6 +427,7 @@ function renderTravelAddPanel(travelKey, dest) {
           <input type="file" id="foodImgInput" accept="image/*" />
           <div id="foodImgPrompt"><p>📷 Foto da comida</p></div>
           <div id="foodImgPreview" style="display:none"><img class="img-preview" id="foodImgEl" alt="" style="max-width:80px;border-radius:8px" /></div>
+          <button type="button" class="img-clear-btn" id="foodImgClear" style="display:none;position:absolute;top:10px;right:10px;z-index:2">✕</button>
         </div>
         <button type="button" class="add-btn" id="addFoodBtn" style="margin-top:12px;width:100%">+ Comida</button>
       </div>
@@ -321,6 +467,7 @@ function renderTravelAddPanel(travelKey, dest) {
         <input type="file" id="attrImgInput" accept="image/*" />
         <div id="attrImgPrompt"><p>📷 Foto de exibição (opcional)</p></div>
         <div id="attrImgPreview" style="display:none"><img class="img-preview" id="attrImgEl" alt="" style="max-width:80px;border-radius:8px" /></div>
+        <button type="button" class="img-clear-btn" id="attrImgClear" style="display:none;position:absolute;top:10px;right:10px;z-index:2">✕</button>
       </div>
       <button type="button" class="add-btn" id="addAttrBtn" style="margin-top:12px;width:100%">+ Atração</button>`;
     bindAttractionPanel(travelKey);
@@ -337,6 +484,7 @@ function renderTravelAddPanel(travelKey, dest) {
         <input type="file" id="lodgingImgInput" accept="image/*" />
         <div id="lodgingImgPrompt"><p>📷 Imagem do local</p></div>
         <div id="lodgingImgPreview" style="display:none"><img class="img-preview" id="lodgingImgEl" alt="" style="max-width:80px;border-radius:8px" /></div>
+        <button type="button" class="img-clear-btn" id="lodgingImgClear" style="display:none;position:absolute;top:10px;right:10px;z-index:2">✕</button>
       </div>
       <div class="input-row" style="margin-top:10px">
         <input class="field-inp" id="lodgingUrlInp" type="url" placeholder="Link de reservas (opcional)" />
@@ -352,15 +500,90 @@ let pendingLodgingImg = null;
 
 function bindImageDrop(inputId, promptId, previewId, imgElId, onSet) {
   const input = document.getElementById(inputId);
+  const prompt = document.getElementById(promptId);
+  const preview = document.getElementById(previewId);
+  const imgEl = document.getElementById(imgElId);
+
+  // Optional clearBtn (needs to exist if you want clear)
+  let clearBtn;
+  if (inputId === "foodImgInput") clearBtn = document.getElementById('foodImgClear');
+  if (inputId === "attrImgInput") clearBtn = document.getElementById('attrImgClear');
+  if (inputId === "lodgingImgInput") clearBtn = document.getElementById('lodgingImgClear');
+
+  function setPreview(b64) {
+    onSet(b64);
+    if (prompt) prompt.style.display = 'none';
+    if (preview) preview.style.display = 'block';
+    if (imgEl) imgEl.src = b64;
+    if (clearBtn) clearBtn.style.display = 'block';
+  }
+
+  function clearPreview() {
+    onSet(null);
+    if (prompt) prompt.style.display = 'block';
+    if (preview) preview.style.display = 'none';
+    if (imgEl) imgEl.src = '';
+    if (input) input.value = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+  }
+
   input?.addEventListener('change', async () => {
     const f = input.files[0];
     if (!f) return;
     const b64 = await compressImage(f);
-    onSet(b64);
-    document.getElementById(promptId).style.display = 'none';
-    document.getElementById(previewId).style.display = 'block';
-    document.getElementById(imgElId).src = b64;
+    setPreview(b64);
   });
+
+  // Drag & Drop
+  const dropZone = input?.closest('.img-drop-zone') || input?.parentElement;
+  if (dropZone) {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); });
+    dropZone.addEventListener('drop', async e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const f = e.dataTransfer?.files?.[0];
+      if (f && f.type.startsWith('image/')) {
+        setPreview(await compressImage(f));
+      }
+    });
+    // Ctrl+V, copy/paste
+    dropZone.addEventListener('paste', async e => {
+      if (!e.clipboardData) return;
+      const items = e.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            setPreview(await compressImage(file));
+            e.preventDefault();
+            return;
+          }
+        }
+        // Paste image url
+        if (item.kind === 'string' && item.type === 'text/plain') {
+          item.getAsString(async str => {
+            if (/^data:image\/|^https?:\/\/.*\.(jpg|jpeg|png|gif|webp)$/i.test(str.trim())) {
+              setPreview(str.trim());
+              e.preventDefault();
+              return;
+            }
+          });
+        }
+      }
+    });
+  }
+
+  // Clear button support (add if exists)
+  clearBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    clearPreview();
+  });
+
+  // Initialize clearBtn state
+  if (clearBtn) clearBtn.style.display = 'none';
 }
 
 function bindCulinariaPanel(travelKey) {
@@ -413,6 +636,8 @@ async function addFoodItem(travelKey) {
     pendingFoodImg = null;
     document.getElementById('foodImgPrompt').style.display = 'block';
     document.getElementById('foodImgPreview').style.display = 'none';
+    document.getElementById('foodImgEl').src = '';
+    document.getElementById('foodImgClear').style.display = 'none';
     showToast('Comida adicionada!');
   } catch {
     showToast('Erro ao salvar.');
@@ -506,6 +731,8 @@ async function addAttractionItem(travelKey) {
     pendingAttrImg = null;
     document.getElementById('attrImgPrompt').style.display = 'block';
     document.getElementById('attrImgPreview').style.display = 'none';
+    document.getElementById('attrImgEl').src = '';
+    document.getElementById('attrImgClear').style.display = 'none';
     showToast('Atração adicionada!');
   } catch {
     showToast('Erro ao salvar.');
@@ -532,6 +759,8 @@ async function addLodgingItem(travelKey) {
     pendingLodgingImg = null;
     document.getElementById('lodgingImgPrompt').style.display = 'block';
     document.getElementById('lodgingImgPreview').style.display = 'none';
+    document.getElementById('lodgingImgEl').src = '';
+    document.getElementById('lodgingImgClear').style.display = 'none';
     showToast('Hospedagem adicionada!');
   } catch {
     showToast('Erro ao salvar.');
@@ -559,6 +788,11 @@ function renderTravelItems(travelKey, dest) {
   list.querySelectorAll('[data-travel-item-del]').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
+      // Adicionando confirmação para remoção do item
+      const nomeItem = btn.closest('.travel-item-card')?.querySelector('.travel-item-title')?.textContent?.trim();
+      let confirmMsg = 'Tem certeza que deseja remover este item? Esta ação não poderá ser desfeita.';
+      if (nomeItem) confirmMsg = `Remover "${nomeItem}"? Essa ação não poderá ser desfeita.`;
+      if (!confirm(confirmMsg)) return;
       removeTravelItem(travelKey, catKey, btn.dataset.travelItemDel);
     });
   });
@@ -577,6 +811,7 @@ function renderTravelItems(travelKey, dest) {
 }
 
 async function removeTravelItem(travelKey, catKey, itemKey) {
+  // A confirmação já foi feita no handler do botão agora
   const pathKey = resolveCatPath(travelKey, catKey);
   try {
     await remove(ref(db, `travels/${travelKey}/cats/${pathKey}/items/${itemKey}`));
@@ -770,21 +1005,27 @@ export function initTravels() {
   document.getElementById('travelBackBtn')?.addEventListener('click', showListView);
   document.getElementById('travelEditDestBtn')?.addEventListener('click', toggleDestEditor);
   document.getElementById('travelDeleteBtn')?.addEventListener('click', () => {
-    if (state.activeTravelKey) removeDest(state.activeTravelKey);
+    if (state.activeTravelKey) {
+      // Adicionando confirmação para remoção de destino
+      const dest = getDest(state.activeTravelKey);
+      let confirmMsg = 'Remover este destino e tudo o que está dentro? Essa ação não poderá ser desfeita.';
+      if (dest?.name) confirmMsg = `Tem certeza que deseja remover a viagem "${dest.name}"?\n\nIsso removerá tudo que está dentro e não poderá ser desfeito.`;
+      if (confirm(confirmMsg)) removeDest(state.activeTravelKey);
+    }
   });
 
-  const coverDrop = document.getElementById('destCoverDrop');
+  // O drag/copy/paste/clear está implementado em setupCoverDropArea e bindImageDrop agora, para as duas áreas possíveis
+
   document.getElementById('destCoverInput')?.addEventListener('change', async e => {
     const f = e.target.files[0];
     if (f) setDestCoverPreview(await compressImage(f), f.name);
   });
   document.getElementById('destCoverClear')?.addEventListener('click', clearDestCover);
-  coverDrop?.addEventListener('dragover', e => { e.preventDefault(); coverDrop.classList.add('drag-over'); });
-  coverDrop?.addEventListener('dragleave', () => coverDrop.classList.remove('drag-over'));
-  coverDrop?.addEventListener('drop', async e => {
-    e.preventDefault();
-    coverDrop.classList.remove('drag-over');
-    const f = e.dataTransfer.files[0];
-    if (f?.type.startsWith('image/')) setDestCoverPreview(await compressImage(f), f.name);
-  });
+  // Os eventos de drag e drop, paste são tratados agora via setupCoverDropArea()
+
+  // Para retrocompatibilidade, se precisar explicitamente:
+  const coverDrop = document.getElementById('destCoverDrop');
+  if (coverDrop) {
+    // Nada necessário, já delegado no setupCoverDropArea()
+  }
 }
