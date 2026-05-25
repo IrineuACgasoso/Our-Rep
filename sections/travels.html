@@ -1,11 +1,43 @@
-<div class="travels-wrap">
+<!-- Lista de destinos -->
+<div id="travelsListView" class="travels-wrap">
   <div class="travel-add-section">
     <h3>✈️ Adicionar Destino</h3>
-    <div class="input-row">
+    <div class="input-row" style="margin-bottom:10px">
       <input class="field-inp" id="destName" type="text" placeholder="Nome do destino (ex: Lisboa, Portugal)" />
+    </div>
+    <div class="img-drop-zone travel-cover-drop" id="destCoverDrop">
+      <input type="file" id="destCoverInput" accept="image/*" />
+      <div id="destCoverPrompt"><p>🖼️ Imagem do destino (arraste, cole ou clique)</p><span>Opcional — aparece no card</span></div>
+      <div id="destCoverPreview" style="display:none">
+        <div class="img-preview-wrap">
+          <img class="img-preview" id="destCoverPreviewImg" src="" alt="" />
+          <span class="img-preview-name" id="destCoverPreviewName"></span>
+          <button type="button" class="img-clear-btn" id="destCoverClear">✕</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
       <button class="add-btn" id="addDestBtn">+ Destino</button>
     </div>
     <div class="err-msg" id="travelErrMsg" style="display:none"></div>
   </div>
-  <div class="destinations-grid" id="destinationsGrid"></div>
+  <div class="destinations-grid destinations-tiles" id="destinationsGrid"></div>
+</div>
+
+<!-- Detalhe de um destino -->
+<div id="travelDetailView" class="travels-detail-wrap" hidden>
+  <div class="travel-detail-top">
+    <button type="button" class="travel-back-btn" id="travelBackBtn">← Voltar</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="travel-edit-btn" id="travelEditDestBtn">✏️ Editar destino</button>
+      <button type="button" class="travel-delete-btn" id="travelDeleteBtn">Remover destino</button>
+    </div>
+  </div>
+  <div class="travel-detail-hero" id="travelDetailHero"></div>
+  <div id="travelDestEditorSlot"></div>
+  <div class="travel-cat-tabs" id="travelCatTabs"></div>
+  <div class="travel-detail-body">
+    <div class="travel-add-panel" id="travelAddPanel"></div>
+    <div class="travel-items-list" id="travelItemsList"></div>
+  </div>
 </div>

@@ -1,7 +1,8 @@
 import { ref, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db } from './firebase.js';
 import { state } from './state.js';
-import { showToast, esc, escH } from './utils.js';
+import { showToast, esc, escH, renderStarsHtml } from './utils.js';
+import { linkRestaurantToActiveTravel, renderTravelRestBanner } from './travels.js';
 
 const CIDADE_PADRAO = "Recife";
 
@@ -42,17 +43,6 @@ export function buildHalfStarSelector(container, initial = 0, onChange) {
     }
   }
   render();
-}
-
-function halfStarHtml(val) {
-  let h = '<span class="rest-stars">';
-  for (let i = 1; i <= 5; i++) {
-    if (val >= i) h += `<span class="s-full">★</span>`;
-    else if (val >= i - 0.5) h += `<span class="s-half">★</span>`;
-    else h += `<span class="s-empty">★</span>`;
-  }
-  h += `<span style="font-size:11px;color:var(--acc-dark);margin-left:4px;font-weight:700">${val % 1 === 0 ? val + '.0' : val}</span>`;
-  return h + '</span>';
 }
 
 function getSelectedAddTags() {
@@ -157,11 +147,14 @@ async function handleAddRest() {
   if (!name) { showRestError('Informe o nome do restaurante.'); return; }
   setRestLoading(true);
   try {
-    await push(ref(db, 'restaurants'), {
+    const newRef = await push(ref(db, 'restaurants'), {
       name, link: link || '', visited,
       stars: visited ? state.addStars : 0,
       note: visited ? note : '', tags, addedAt: Date.now()
     });
+    if (state.pendingTravelRestaurant && newRef.key) {
+      await linkRestaurantToActiveTravel(newRef.key);
+    }
     document.getElementById('restName').value = '';
     document.getElementById('restLink').value = '';
     document.getElementById('restVisitedToggle').checked = false;
@@ -172,7 +165,7 @@ async function handleAddRest() {
     state.addStars = 0;
     buildHalfStarSelector(document.getElementById('addStarRow'), 0, v => { state.addStars = v; });
     document.querySelectorAll('#addRestTagsWrap .editor-tag-chip').forEach(b => b.classList.remove('selected'));
-    showToast('Restaurante adicionado! 🍽️');
+    if (!state.pendingTravelRestaurant) showToast('Restaurante adicionado! 🍽️');
   } catch {
     showRestError('Erro ao salvar.');
   }
@@ -295,7 +288,7 @@ export function renderRestaurants() {
     return;
   }
   list.innerHTML = entries.map(([key, r]) => {
-    const starsHtml = r.visited && r.stars ? halfStarHtml(r.stars) : '';
+    const starsHtml = r.visited && r.stars ? renderStarsHtml(r.stars) : '';
     const tagsHtml = (r.tags || []).map(tk => state.tagsData[tk] ? `<span class="rest-card-tag">${escH(state.tagsData[tk].name)}</span>` : '').join('');
     const nameBtn = r.link
       ? `<button type="button" class="rest-name-btn" data-rest-link="${escH(r.link)}">${escH(r.name)} <span class="map-icon">📍</span></button>`
@@ -305,7 +298,7 @@ export function renderRestaurants() {
         <div class="rest-icon">${r.visited ? '✅' : '📍'}</div>
         <div class="rest-body">${nameBtn}
           <div class="rest-meta">
-            <span class="rest-badge ${r.visited ? 'visited' : 'unvisited'}">${r.visited ? '✓ Já fomos' : 'Quero ir'}</span>
+            <span class="rest-badge ${r.visited ? 'visited' : 'unvisited'}">${r.visited ? '✓ Já fomos' : 'Queremos ir'}</span>
             ${starsHtml}
           </div>
           ${tagsHtml ? `<div class="rest-card-tags">${tagsHtml}</div>` : ''}
@@ -406,7 +399,7 @@ export async function updateMapMarkers() {
     const starsText = r.visited && r.stars ? ` · ⭐ ${r.stars % 1 === 0 ? r.stars + '.0' : r.stars}` : '';
     const popup = `<div style="font-family:'Nunito',sans-serif;min-width:150px;padding:2px">
       <div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#e2dbd6">${escH(r.name)}</div>
-      <div style="font-size:12px;color:${color};font-weight:600;margin-bottom:4px">${r.visited ? '✅ Já fomos' : '📍 Quero ir'}${starsText}</div>
+      <div style="font-size:12px;color:${color};font-weight:600;margin-bottom:4px">${r.visited ? '✅ Já fomos' : '📍 Queremos ir'}${starsText}</div>
       ${tagNames ? `<div style="font-size:11px;color:#888;margin-bottom:4px">${tagNames}</div>` : ''}
       ${r.note ? `<div style="font-size:12px;font-style:italic;color:#aaa;margin-bottom:4px">"${escH(r.note)}"</div>` : ''}
       ${r.link ? `<a href="${escH(r.link)}" target="_blank" style="font-size:11px;color:${color};text-decoration:none">📍 Ver no Maps</a>` : ''}

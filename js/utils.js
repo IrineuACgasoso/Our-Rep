@@ -31,6 +31,17 @@ export function escH(s) {
     .replace(/"/g, '&quot;');
 }
 
+export function renderStarsHtml(val) {
+  let h = '<span class="rest-stars">';
+  for (let i = 1; i <= 5; i++) {
+    if (val >= i) h += '<span class="s-full">★</span>';
+    else if (val >= i - 0.5) h += '<span class="s-half">★</span>';
+    else h += '<span class="s-empty">★</span>';
+  }
+  h += `<span style="font-size:11px;color:var(--acc-dark);margin-left:4px;font-weight:700">${val % 1 === 0 ? val + '.0' : val}</span>`;
+  return h + '</span>';
+}
+
 export function compressImage(file, maxW = 600, quality = 0.75) {
   return new Promise(resolve => {
     const img = new Image();

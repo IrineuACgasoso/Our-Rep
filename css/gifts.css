@@ -24,8 +24,7 @@
 .gift-info { padding:12px 14px 14px; }
 .gift-title { font-family:'Playfair Display',serif; font-size:13px; font-weight:500; color:var(--text); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 .gift-domain { font-size:11px; color:var(--text-muted); margin-top:5px; }
-.del-btn { position:absolute; top:8px; right:8px; width:26px; height:26px; border-radius:50%; border:none; background:rgba(0,0,0,.75); color:#ccc; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .2s,background .2s; }
-.gift-card:hover .del-btn { opacity:1; }
+.del-btn { width:26px; height:26px; border-radius:50%; border:none; background:rgba(0,0,0,.75); color:#ccc; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .del-btn:hover { background:#c03828; color:#fff; }
 
 @media(max-width:480px){

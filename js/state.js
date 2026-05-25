@@ -11,7 +11,11 @@ export const state = {
   pendingImage: null,
   addStars: 0,
   activeTagFilter: null,
-  activeCats: {},
+  // viagens
+  activeTravelKey: null,
+  activeTravelCat: 'culinaria',
+  pendingDestCover: null,
+  pendingTravelRestaurant: null,
   // mapa
   leafletMap: null,
   mapMarkers: [],
@@ -19,7 +23,10 @@ export const state = {
   coordsCache: {}
 };
 
-export const DEST_CATS = [
-  '🍜 Culinária', '🏛️ Passeios', '🎡 Atrações',
-  '💡 Dicas', '🏨 Hospedagem', '🛍️ Compras'
+/** Categorias ativas na aba viagens (sem Dicas e Compras) */
+export const TRAVEL_CATS = [
+  { key: 'culinaria', label: '🍜 Culinária' },
+  { key: 'passeios', label: '🏛️ Passeios' },
+  { key: 'atracoes', label: '🎡 Atrações' },
+  { key: 'hospedagem', label: '🏨 Hospedagem' }
 ];

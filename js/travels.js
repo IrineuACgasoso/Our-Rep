@@ -1,90 +1,155 @@
-import { ref, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db } from './firebase.js';
-import { state, DEST_CATS } from './state.js';
-import { showToast, escH } from './utils.js';
+import { state, TRAVEL_CATS } from './state.js';
+import { showToast, escH, compressImage, renderStarsHtml } from './utils.js';
+
+/** Categorias vazias para um destino novo */
+export function createEmptyTravelCats() {
+  const cats = {};
+  TRAVEL_CATS.forEach(c => { cats[c.key] = { label: c.label, items: {} }; });
+  return cats;
+}
 
 function showTravelError(m) {
   const e = document.getElementById('travelErrMsg');
+  if (!e) return;
   e.textContent = m;
   e.style.display = m ? 'block' : 'none';
 }
 
-function buildDestCardInner(destKey, dest) {
-  const cats = dest.cats || {};
-  const catKeys = Object.keys(cats);
-  if (!catKeys.length) {
-    return `<div style="padding:20px;text-align:center;font-size:12px;color:var(--text-muted)">Sem categorias.</div>`;
-  }
-  const activeCat = state.activeCats[destKey] || catKeys[0];
-  const tabsHtml = catKeys.map(ck =>
-    `<button type="button" class="dest-cat-btn ${ck === activeCat ? 'active' : ''}" data-dest="${destKey}" data-cat="${ck}">${escH(cats[ck].label || ck)}</button>`
-  ).join('');
-  const items = cats[activeCat]?.items || {};
-  const itemsHtml = Object.entries(items).sort((a, b) => (a[1].addedAt || 0) - (b[1].addedAt || 0)).map(([ik, it]) => `
-    <div class="dest-item">
-      <div class="dest-item-dot"></div>
-      <div class="dest-item-text">${escH(it.text)}</div>
-      <button type="button" class="dest-item-del" data-dest="${destKey}" data-cat="${activeCat}" data-item="${ik}">✕</button>
-    </div>`).join('') ||
-    `<div style="padding:12px 0;font-size:12px;color:var(--text-muted)">Nenhum item ainda.</div>`;
-  return `<div class="dest-cats">${tabsHtml}</div><div class="dest-items">${itemsHtml}
-    <div class="dest-add-item">
-      <input class="dest-add-input" id="inp-${destKey}-${activeCat}" type="text" placeholder="Adicionar item..." />
-      <button type="button" class="dest-add-input-btn" data-dest="${destKey}" data-cat="${activeCat}">＋</button>
-    </div></div>`;
+function getDest(key) {
+  return state.travelsData[key];
 }
 
-function bindDestCardEvents(cardEl, destKey) {
-  cardEl.querySelectorAll('.dest-cat-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.activeCats[destKey] = btn.dataset.cat;
-      renderDestCard(destKey);
-    });
-  });
-  cardEl.querySelectorAll('.dest-item-del').forEach(btn => {
-    btn.addEventListener('click', () => removeDestItem(btn.dataset.dest, btn.dataset.cat, btn.dataset.item));
-  });
-  const inp = cardEl.querySelector('.dest-add-input');
-  const addBtn = cardEl.querySelector('.dest-add-input-btn');
-  if (inp && addBtn) {
-    const cat = addBtn.dataset.cat;
-    inp.addEventListener('keydown', e => e.key === 'Enter' && addDestItem(destKey, cat));
-    addBtn.addEventListener('click', () => addDestItem(destKey, cat));
-  }
+function getCatItems(dest, catKey) {
+  const cats = dest?.cats || {};
+  const cat = cats[catKey] || Object.values(cats).find(c => c.label === TRAVEL_CATS.find(t => t.key === catKey)?.label);
+  return cat?.items || {};
 }
 
-function renderDestCard(destKey) {
-  const dest = state.travelsData[destKey];
-  const cardEl = document.querySelector(`[data-dest-key="${destKey}"]`);
-  if (!cardEl || !dest) return;
-  const headerHtml = cardEl.querySelector('.dest-header')?.outerHTML ||
-    `<div class="dest-header"><span class="dest-name">📍 ${escH(dest.name)}</span><button type="button" class="dest-del" data-dest-del="${destKey}">Remover</button></div>`;
-  cardEl.innerHTML = headerHtml + buildDestCardInner(destKey, dest);
-  cardEl.querySelector('[data-dest-del]')?.addEventListener('click', () => removeDest(destKey));
-  bindDestCardEvents(cardEl, destKey);
+function resolveCatPath(travelKey, catKey) {
+  const dest = getDest(travelKey);
+  if (dest?.cats?.[catKey]) return catKey;
+  const label = TRAVEL_CATS.find(c => c.key === catKey)?.label;
+  const found = Object.entries(dest?.cats || {}).find(([, c]) => c.label === label);
+  return found ? found[0] : catKey;
+}
+
+function itemDbPath(travelKey, catKey, itemKey) {
+  const pathKey = resolveCatPath(travelKey, catKey);
+  return `travels/${travelKey}/cats/${pathKey}/items/${itemKey}`;
+}
+
+/** Vincula upload de imagem num editor inline */
+function bindEditorImage(editorEl, existingImage = '') {
+  const input = editorEl.querySelector('[data-edit-img-input]');
+  const prompt = editorEl.querySelector('[data-edit-img-prompt]');
+  const preview = editorEl.querySelector('[data-edit-img-preview]');
+  const imgEl = editorEl.querySelector('[data-edit-img-el]');
+  const clearBtn = editorEl.querySelector('[data-edit-img-clear]');
+
+  if (existingImage) {
+    editorEl.dataset.newImage = existingImage;
+    if (prompt) prompt.style.display = 'none';
+    if (preview) preview.style.display = 'block';
+    if (imgEl) imgEl.src = existingImage;
+  }
+
+  input?.addEventListener('change', async () => {
+    const f = input.files[0];
+    if (!f) return;
+    const b64 = await compressImage(f);
+    editorEl.dataset.newImage = b64;
+    if (prompt) prompt.style.display = 'none';
+    if (preview) preview.style.display = 'block';
+    if (imgEl) imgEl.src = b64;
+  });
+  clearBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    editorEl.dataset.newImage = '';
+    if (prompt) prompt.style.display = 'block';
+    if (preview) preview.style.display = 'none';
+    if (imgEl) imgEl.src = '';
+    input.value = '';
+  });
+}
+
+function getEditorImage(editorEl, fallback = '') {
+  return editorEl?.dataset.newImage !== undefined ? editorEl.dataset.newImage : fallback;
+}
+
+function itemActionBtns(itemKey, editable = true) {
+  const edit = editable
+    ? `<button type="button" class="travel-item-edit" data-travel-item-edit="${itemKey}" title="Editar">✏️</button>`
+    : '';
+  return `<div class="travel-item-actions">${edit}<button type="button" class="travel-item-del" data-travel-item-del="${itemKey}">✕</button></div>`;
+}
+
+// ── Lista / navegação ──
+
+function showListView() {
+  state.activeTravelKey = null;
+  document.getElementById('travelsListView')?.removeAttribute('hidden');
+  document.getElementById('travelDetailView')?.setAttribute('hidden', '');
+  renderTravelsList();
+}
+
+export function openTravelDetail(key) {
+  state.activeTravelKey = key;
+  state.activeTravelCat = 'culinaria';
+  document.getElementById('travelsListView')?.setAttribute('hidden', '');
+  document.getElementById('travelDetailView')?.removeAttribute('hidden');
+  renderTravelDetail();
 }
 
 export function renderTravels() {
+  if (state.activeTravelKey && state.activeSection === 'travels') {
+    renderTravelDetail();
+  } else {
+    showListView();
+  }
+}
+
+function renderTravelsList() {
   const grid = document.getElementById('destinationsGrid');
+  if (!grid) return;
   const entries = Object.entries(state.travelsData).sort((a, b) => (a[1].addedAt || 0) - (b[1].addedAt || 0));
   if (!entries.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">✈️</div><p>Nenhum destino ainda</p><span>Adicione um destino acima!</span></div>`;
     return;
   }
-  grid.innerHTML = entries.map(([key, dest]) => `
-    <div class="dest-card" data-dest-key="${key}">
-      <div class="dest-header">
-        <span class="dest-name">📍 ${escH(dest.name)}</span>
-        <button type="button" class="dest-del" data-dest-del="${key}">Remover</button>
-      </div>
-      ${buildDestCardInner(key, dest)}
-    </div>`).join('');
+  grid.innerHTML = entries.map(([key, dest]) => {
+    const img = dest.image
+      ? `<img class="dest-tile-img" src="${escH(dest.image)}" alt="" />`
+      : `<div class="dest-tile-placeholder">✈️</div>`;
+    return `<article class="dest-tile" data-open-travel="${key}" tabindex="0">
+      ${img}
+      <div class="dest-tile-name">${escH(dest.name)}</div>
+    </article>`;
+  }).join('');
 
-  entries.forEach(([key]) => {
-    const card = grid.querySelector(`[data-dest-key="${key}"]`);
-    card?.querySelector('[data-dest-del]')?.addEventListener('click', () => removeDest(key));
-    if (card) bindDestCardEvents(card, key);
+  grid.querySelectorAll('[data-open-travel]').forEach(el => {
+    el.addEventListener('click', () => openTravelDetail(el.dataset.openTravel));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') openTravelDetail(el.dataset.openTravel); });
   });
+}
+
+// ── Capa do destino (formulário de adicionar) ──
+
+function setDestCoverPreview(b64, name) {
+  state.pendingDestCover = b64;
+  document.getElementById('destCoverPrompt').style.display = 'none';
+  document.getElementById('destCoverPreview').style.display = 'block';
+  document.getElementById('destCoverPreviewImg').src = b64;
+  document.getElementById('destCoverPreviewName').textContent = name || 'imagem';
+}
+
+function clearDestCover() {
+  state.pendingDestCover = null;
+  document.getElementById('destCoverPrompt').style.display = 'block';
+  document.getElementById('destCoverPreview').style.display = 'none';
+  document.getElementById('destCoverPreviewImg').src = '';
+  document.getElementById('destCoverInput').value = '';
 }
 
 async function handleAddDest() {
@@ -92,12 +157,14 @@ async function handleAddDest() {
   if (!name) { showTravelError('Informe o nome do destino.'); return; }
   showTravelError('');
   try {
-    const cats = {};
-    DEST_CATS.forEach(c => {
-      cats[btoa(encodeURIComponent(c)).slice(0, 12)] = { label: c, items: {} };
+    await push(ref(db, 'travels'), {
+      name,
+      image: state.pendingDestCover || '',
+      cats: createEmptyTravelCats(),
+      addedAt: Date.now()
     });
-    await push(ref(db, 'travels'), { name, cats, addedAt: Date.now() });
     document.getElementById('destName').value = '';
+    clearDestCover();
     showToast('Destino adicionado! ✈️');
   } catch {
     showTravelError('Erro ao salvar.');
@@ -105,35 +172,619 @@ async function handleAddDest() {
 }
 
 async function removeDest(key) {
+  if (!confirm('Remover este destino e tudo o que está dentro?')) return;
   try {
     await remove(ref(db, `travels/${key}`));
+    showToast('Destino removido.');
+    showListView();
+  } catch {
+    showToast('Erro ao remover.');
+  }
+}
+
+function closeDestEditor() {
+  document.getElementById('travelDestEditorSlot').innerHTML = '';
+}
+
+function toggleDestEditor() {
+  const key = state.activeTravelKey;
+  const dest = getDest(key);
+  if (!dest) return;
+  const slot = document.getElementById('travelDestEditorSlot');
+  if (slot.querySelector('.inline-editor')) { closeDestEditor(); return; }
+
+  slot.innerHTML = `<div class="inline-editor travel-dest-editor" id="travel-dest-editor">
+    <div class="inline-editor-title">✏️ Editar destino</div>
+    <div class="editor-row">
+      <input class="field-inp" type="text" id="editDestName" value="${escH(dest.name)}" placeholder="Nome do destino *" style="width:100%" />
+    </div>
+    <div class="img-drop-zone" style="margin-top:8px">
+      <input type="file" accept="image/*" data-edit-img-input />
+      <div data-edit-img-prompt><p>🖼️ Trocar imagem de capa</p></div>
+      <div data-edit-img-preview style="display:none"><div class="img-preview-wrap">
+        <img class="img-preview" data-edit-img-el alt="" />
+        <button type="button" class="img-clear-btn" data-edit-img-clear>✕</button>
+      </div></div>
+    </div>
+    <div class="editor-actions">
+      <button type="button" class="editor-cancel" id="cancelDestEdit">Cancelar</button>
+      <button type="button" class="editor-save" id="saveDestEdit">Salvar</button>
+    </div>
+  </div>`;
+
+  const editor = document.getElementById('travel-dest-editor');
+  bindEditorImage(editor, dest.image || '');
+  document.getElementById('cancelDestEdit').addEventListener('click', closeDestEditor);
+  document.getElementById('saveDestEdit').addEventListener('click', () => saveDestEditor(key));
+}
+
+async function saveDestEditor(key) {
+  const editor = document.getElementById('travel-dest-editor');
+  const dest = getDest(key);
+  const name = document.getElementById('editDestName')?.value.trim();
+  if (!name) { showToast('Informe o nome do destino.'); return; }
+  const image = getEditorImage(editor, dest.image || '');
+  try {
+    await update(ref(db, `travels/${key}`), { name, image });
+    closeDestEditor();
+    showToast('Destino atualizado! ✓');
+    renderTravelDetail();
+  } catch {
+    showToast('Erro ao salvar.');
+  }
+}
+
+// ── Detalhe do destino ──
+
+function renderTravelDetail() {
+  const key = state.activeTravelKey;
+  const dest = getDest(key);
+  if (!dest) { showListView(); return; }
+
+  closeDestEditor();
+
+  const hero = document.getElementById('travelDetailHero');
+  hero.innerHTML = dest.image
+    ? `<img class="travel-hero-img" src="${escH(dest.image)}" alt="" /><div class="travel-hero-name">${escH(dest.name)}</div>`
+    : `<div class="travel-hero-placeholder">✈️</div><div class="travel-hero-name">${escH(dest.name)}</div>`;
+
+  const tabs = document.getElementById('travelCatTabs');
+  tabs.innerHTML = TRAVEL_CATS.map(c =>
+    `<button type="button" class="travel-cat-tab ${state.activeTravelCat === c.key ? 'active' : ''}" data-cat="${c.key}">${c.label}</button>`
+  ).join('');
+  tabs.querySelectorAll('.travel-cat-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.activeTravelCat = btn.dataset.cat;
+      renderTravelDetail();
+    });
+  });
+
+  renderTravelAddPanel(key, dest);
+  renderTravelItems(key, dest);
+}
+
+function renderTravelAddPanel(travelKey, dest) {
+  const panel = document.getElementById('travelAddPanel');
+  const cat = state.activeTravelCat;
+
+  if (cat === 'culinaria') {
+    panel.innerHTML = `
+      <h4>Adicionar em Culinária</h4>
+      <div class="travel-type-btns">
+        <button type="button" class="travel-type-btn active" data-culinaria-type="food">🍽️ Comida</button>
+        <button type="button" class="travel-type-btn" data-culinaria-type="restaurant">📍 Restaurante</button>
+      </div>
+      <div id="culinariaFoodForm">
+        <div class="input-row" style="margin-bottom:10px">
+          <input class="field-inp" id="foodNameInp" type="text" placeholder="Nome da comida *" />
+        </div>
+        <div class="img-drop-zone" id="foodImgDrop">
+          <input type="file" id="foodImgInput" accept="image/*" />
+          <div id="foodImgPrompt"><p>📷 Foto da comida</p></div>
+          <div id="foodImgPreview" style="display:none"><img class="img-preview" id="foodImgEl" alt="" style="max-width:80px;border-radius:8px" /></div>
+        </div>
+        <button type="button" class="add-btn" id="addFoodBtn" style="margin-top:12px;width:100%">+ Comida</button>
+      </div>
+      <div id="culinariaRestForm" style="display:none">
+        <p class="travel-hint">Use a aba <strong>Restaurantes</strong> para cadastrar com nome, nota, Maps e status. O restaurante ficará salvo aqui na viagem também.</p>
+        <button type="button" class="travel-link-rest-btn" id="goAddRestaurantBtn">Ir para aba Restaurantes →</button>
+        <div class="travel-existing-rest">
+          <p style="font-size:11px;color:var(--text-muted);margin:8px 0 6px">Ou vincule um já cadastrado:</p>
+          <select id="linkExistingRestSelect"><option value="">Selecione...</option></select>
+          <button type="button" class="add-btn" id="linkExistingRestBtn" style="margin-top:8px;width:100%">Vincular selecionado</button>
+        </div>
+      </div>`;
+    bindCulinariaPanel(travelKey);
+    return;
+  }
+
+  if (cat === 'passeios') {
+    panel.innerHTML = `
+      <h4>Adicionar Passeio</h4>
+      <div class="input-row" style="margin-bottom:8px">
+        <input class="field-inp" id="tourNameInp" type="text" placeholder="Nome do passeio *" />
+      </div>
+      <textarea class="field-inp" id="tourNoteInp" rows="2" placeholder="Observações (opcional)" style="width:100%"></textarea>
+      <button type="button" class="add-btn" id="addTourBtn" style="margin-top:12px;width:100%">+ Passeio</button>`;
+    document.getElementById('addTourBtn')?.addEventListener('click', () => addTourItem(travelKey));
+    document.getElementById('tourNameInp')?.addEventListener('keydown', e => e.key === 'Enter' && addTourItem(travelKey));
+    return;
+  }
+
+  if (cat === 'atracoes') {
+    panel.innerHTML = `
+      <h4>Adicionar Atração</h4>
+      <div class="input-row" style="margin-bottom:10px">
+        <input class="field-inp" id="attrNameInp" type="text" placeholder="Nome da atração *" />
+      </div>
+      <div class="img-drop-zone" id="attrImgDrop">
+        <input type="file" id="attrImgInput" accept="image/*" />
+        <div id="attrImgPrompt"><p>📷 Foto de exibição (opcional)</p></div>
+        <div id="attrImgPreview" style="display:none"><img class="img-preview" id="attrImgEl" alt="" style="max-width:80px;border-radius:8px" /></div>
+      </div>
+      <button type="button" class="add-btn" id="addAttrBtn" style="margin-top:12px;width:100%">+ Atração</button>`;
+    bindAttractionPanel(travelKey);
+    return;
+  }
+
+  if (cat === 'hospedagem') {
+    panel.innerHTML = `
+      <h4>Adicionar Hospedagem</h4>
+      <div class="input-row" style="margin-bottom:8px">
+        <input class="field-inp" id="lodgingNameInp" type="text" placeholder="Nome *" />
+      </div>
+      <div class="img-drop-zone" id="lodgingImgDrop">
+        <input type="file" id="lodgingImgInput" accept="image/*" />
+        <div id="lodgingImgPrompt"><p>📷 Imagem do local</p></div>
+        <div id="lodgingImgPreview" style="display:none"><img class="img-preview" id="lodgingImgEl" alt="" style="max-width:80px;border-radius:8px" /></div>
+      </div>
+      <div class="input-row" style="margin-top:10px">
+        <input class="field-inp" id="lodgingUrlInp" type="url" placeholder="Link de reservas (opcional)" />
+      </div>
+      <button type="button" class="add-btn" id="addLodgingBtn" style="margin-top:12px;width:100%">+ Hospedagem</button>`;
+    bindLodgingPanel(travelKey);
+  }
+}
+
+let pendingFoodImg = null;
+let pendingAttrImg = null;
+let pendingLodgingImg = null;
+
+function bindImageDrop(inputId, promptId, previewId, imgElId, onSet) {
+  const input = document.getElementById(inputId);
+  input?.addEventListener('change', async () => {
+    const f = input.files[0];
+    if (!f) return;
+    const b64 = await compressImage(f);
+    onSet(b64);
+    document.getElementById(promptId).style.display = 'none';
+    document.getElementById(previewId).style.display = 'block';
+    document.getElementById(imgElId).src = b64;
+  });
+}
+
+function bindCulinariaPanel(travelKey) {
+  const foodForm = document.getElementById('culinariaFoodForm');
+  const restForm = document.getElementById('culinariaRestForm');
+  pendingFoodImg = null;
+
+  document.querySelectorAll('[data-culinaria-type]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-culinaria-type]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const isFood = btn.dataset.culinariaType === 'food';
+      foodForm.style.display = isFood ? 'block' : 'none';
+      restForm.style.display = isFood ? 'none' : 'block';
+    });
+  });
+
+  bindImageDrop('foodImgInput', 'foodImgPrompt', 'foodImgPreview', 'foodImgEl', b64 => { pendingFoodImg = b64; });
+  document.getElementById('addFoodBtn')?.addEventListener('click', () => addFoodItem(travelKey));
+
+  document.getElementById('goAddRestaurantBtn')?.addEventListener('click', () => {
+    state.pendingTravelRestaurant = { travelKey };
+    window.__goRestaurantsForTravel?.();
+  });
+
+  const select = document.getElementById('linkExistingRestSelect');
+  const rests = Object.entries(state.restaurantsData);
+  rests.forEach(([rk, r]) => {
+    const opt = document.createElement('option');
+    opt.value = rk;
+    opt.textContent = r.name || 'Sem nome';
+    select?.appendChild(opt);
+  });
+  if (!rests.length) {
+    select.innerHTML = '<option value="">Nenhum restaurante cadastrado</option>';
+    document.getElementById('linkExistingRestBtn').disabled = true;
+  }
+  document.getElementById('linkExistingRestBtn')?.addEventListener('click', () => linkExistingRestaurant(travelKey));
+}
+
+async function addFoodItem(travelKey) {
+  const name = document.getElementById('foodNameInp')?.value.trim();
+  if (!name) { showToast('Informe o nome da comida.'); return; }
+  if (!pendingFoodImg) { showToast('Adicione a foto da comida.'); return; }
+  try {
+    await push(ref(db, `travels/${travelKey}/cats/culinaria/items`), {
+      type: 'food', name, image: pendingFoodImg || '', addedAt: Date.now()
+    });
+    document.getElementById('foodNameInp').value = '';
+    pendingFoodImg = null;
+    document.getElementById('foodImgPrompt').style.display = 'block';
+    document.getElementById('foodImgPreview').style.display = 'none';
+    showToast('Comida adicionada!');
+  } catch {
+    showToast('Erro ao salvar.');
+  }
+}
+
+async function linkExistingRestaurant(travelKey) {
+  const rk = document.getElementById('linkExistingRestSelect')?.value;
+  if (!rk) { showToast('Selecione um restaurante.'); return; }
+  try {
+    await push(ref(db, `travels/${travelKey}/cats/culinaria/items`), {
+      type: 'restaurant', restaurantKey: rk, addedAt: Date.now()
+    });
+    showToast('Restaurante vinculado!');
+  } catch {
+    showToast('Erro ao vincular.');
+  }
+}
+
+/** Chamado após adicionar restaurante na aba principal */
+export async function linkRestaurantToActiveTravel(restaurantKey) {
+  const pending = state.pendingTravelRestaurant;
+  if (!pending?.travelKey) return false;
+  try {
+    await push(ref(db, `travels/${pending.travelKey}/cats/culinaria/items`), {
+      type: 'restaurant', restaurantKey, addedAt: Date.now()
+    });
+    const travelKey = pending.travelKey;
+    state.pendingTravelRestaurant = null;
+    renderTravelRestBanner();
+    window.__goTravels?.();
+    openTravelDetail(travelKey);
+    showToast('Restaurante vinculado à viagem! ✈️');
+    return true;
+  } catch {
+    showToast('Restaurante salvo, mas falhou ao vincular à viagem.');
+    return false;
+  }
+}
+
+export function renderTravelRestBanner() {
+  const banner = document.getElementById('travelRestBanner');
+  if (!banner) return;
+  const pending = state.pendingTravelRestaurant;
+  if (!pending || state.activeSection !== 'restaurants') {
+    banner.style.display = 'none';
+    return;
+  }
+  const dest = getDest(pending.travelKey);
+  banner.style.display = 'flex';
+  banner.innerHTML = `
+    <p>✈️ Cadastrando restaurante para <strong>${escH(dest?.name || 'viagem')}</strong></p>
+    <button type="button" data-cancel-travel-link>Cancelar</button>`;
+  banner.querySelector('[data-cancel-travel-link]')?.addEventListener('click', () => {
+    state.pendingTravelRestaurant = null;
+    banner.style.display = 'none';
+    window.__goTravels?.();
+  });
+}
+
+async function addTourItem(travelKey) {
+  const name = document.getElementById('tourNameInp')?.value.trim();
+  const note = document.getElementById('tourNoteInp')?.value.trim() || '';
+  if (!name) { showToast('Informe o nome do passeio.'); return; }
+  try {
+    await push(ref(db, `travels/${travelKey}/cats/passeios/items`), {
+      type: 'tour', name, note, addedAt: Date.now()
+    });
+    document.getElementById('tourNameInp').value = '';
+    document.getElementById('tourNoteInp').value = '';
+    showToast('Passeio adicionado!');
+  } catch {
+    showToast('Erro ao salvar.');
+  }
+}
+
+function bindAttractionPanel(travelKey) {
+  pendingAttrImg = null;
+  bindImageDrop('attrImgInput', 'attrImgPrompt', 'attrImgPreview', 'attrImgEl', b64 => { pendingAttrImg = b64; });
+  document.getElementById('addAttrBtn')?.addEventListener('click', () => addAttractionItem(travelKey));
+}
+
+async function addAttractionItem(travelKey) {
+  const name = document.getElementById('attrNameInp')?.value.trim();
+  if (!name) { showToast('Informe o nome da atração.'); return; }
+  try {
+    await push(ref(db, `travels/${travelKey}/cats/atracoes/items`), {
+      type: 'attraction', name, image: pendingAttrImg || '', addedAt: Date.now()
+    });
+    document.getElementById('attrNameInp').value = '';
+    pendingAttrImg = null;
+    document.getElementById('attrImgPrompt').style.display = 'block';
+    document.getElementById('attrImgPreview').style.display = 'none';
+    showToast('Atração adicionada!');
+  } catch {
+    showToast('Erro ao salvar.');
+  }
+}
+
+function bindLodgingPanel(travelKey) {
+  pendingLodgingImg = null;
+  bindImageDrop('lodgingImgInput', 'lodgingImgPrompt', 'lodgingImgPreview', 'lodgingImgEl', b64 => { pendingLodgingImg = b64; });
+  document.getElementById('addLodgingBtn')?.addEventListener('click', () => addLodgingItem(travelKey));
+}
+
+async function addLodgingItem(travelKey) {
+  const name = document.getElementById('lodgingNameInp')?.value.trim();
+  const bookingUrl = document.getElementById('lodgingUrlInp')?.value.trim() || '';
+  if (!name) { showToast('Informe o nome da hospedagem.'); return; }
+  if (!pendingLodgingImg) { showToast('Adicione a imagem da hospedagem.'); return; }
+  try {
+    await push(ref(db, `travels/${travelKey}/cats/hospedagem/items`), {
+      type: 'lodging', name, image: pendingLodgingImg || '', bookingUrl, addedAt: Date.now()
+    });
+    document.getElementById('lodgingNameInp').value = '';
+    document.getElementById('lodgingUrlInp').value = '';
+    pendingLodgingImg = null;
+    document.getElementById('lodgingImgPrompt').style.display = 'block';
+    document.getElementById('lodgingImgPreview').style.display = 'none';
+    showToast('Hospedagem adicionada!');
+  } catch {
+    showToast('Erro ao salvar.');
+  }
+}
+
+function renderTravelItems(travelKey, dest) {
+  const list = document.getElementById('travelItemsList');
+  const catKey = state.activeTravelCat;
+  const items = Object.entries(getCatItems(dest, catKey)).sort((a, b) => (a[1].addedAt || 0) - (b[1].addedAt || 0));
+
+  if (!items.length) {
+    list.innerHTML = `<div class="empty-state" style="padding:2rem 0"><p style="font-size:14px;color:var(--text-muted)">Nada nesta categoria ainda</p></div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(([ik, it]) => renderTravelItemCard(travelKey, catKey, ik, it)).join('');
+
+  list.querySelectorAll('[data-travel-item-edit]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openTravelItemEditor(travelKey, catKey, btn.dataset.travelItemEdit);
+    });
+  });
+  list.querySelectorAll('[data-travel-item-del]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      removeTravelItem(travelKey, catKey, btn.dataset.travelItemDel);
+    });
+  });
+  list.querySelectorAll('[data-rest-open]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const link = btn.dataset.restOpen;
+      if (link) window.open(link, '_blank');
+    });
+  });
+  list.querySelectorAll('[data-booking-open]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.dataset.bookingOpen;
+      if (url) window.open(url.startsWith('http') ? url : 'https://' + url, '_blank');
+    });
+  });
+}
+
+async function removeTravelItem(travelKey, catKey, itemKey) {
+  const pathKey = resolveCatPath(travelKey, catKey);
+  try {
+    await remove(ref(db, `travels/${travelKey}/cats/${pathKey}/items/${itemKey}`));
+    document.getElementById(`travel-item-editor-${itemKey}`)?.remove();
     showToast('Removido.');
   } catch {
-    showToast('Erro.');
+    showToast('Erro ao remover.');
   }
 }
 
-async function addDestItem(destKey, catKey) {
-  const inp = document.getElementById(`inp-${destKey}-${catKey}`);
-  const text = inp?.value.trim();
-  if (!text) return;
+function openTravelItemEditor(travelKey, catKey, itemKey) {
+  const editorId = `travel-item-editor-${itemKey}`;
+  if (document.getElementById(editorId)) {
+    document.getElementById(editorId).remove();
+    return;
+  }
+
+  const dest = getDest(travelKey);
+  const pathKey = resolveCatPath(travelKey, catKey);
+  const it = dest?.cats?.[pathKey]?.items?.[itemKey] || getCatItems(dest, catKey)[itemKey];
+  const card = document.querySelector(`[data-travel-item="${itemKey}"]`);
+  if (!card || !it) return;
+
+  const div = document.createElement('div');
+  div.className = 'inline-editor';
+  div.id = editorId;
+  div.style.margin = '0';
+  div.style.borderRadius = '0 0 12px 12px';
+
+  if (it.type === 'food' || (catKey === 'culinaria' && it.name && !it.restaurantKey)) {
+    div.innerHTML = buildFoodEditorHtml(itemKey, it);
+  } else if (it.type === 'attraction' || catKey === 'atracoes') {
+    div.innerHTML = buildAttractionEditorHtml(itemKey, it);
+  } else if (it.type === 'lodging' || catKey === 'hospedagem') {
+    div.innerHTML = buildLodgingEditorHtml(itemKey, it);
+  } else if (it.type === 'tour' || catKey === 'passeios') {
+    div.innerHTML = buildTourEditorHtml(itemKey, it);
+  } else {
+    div.innerHTML = buildGenericEditorHtml(itemKey, it);
+  }
+
+  card.appendChild(div);
+  if (div.querySelector('[data-edit-img-input]')) bindEditorImage(div, it.image || '');
+  div.querySelector('[data-item-cancel]')?.addEventListener('click', () => div.remove());
+  div.querySelector('[data-item-save]')?.addEventListener('click', () => saveTravelItemEditor(travelKey, catKey, itemKey, it));
+}
+
+function buildFoodEditorHtml(itemKey, it) {
+  return `<div class="inline-editor-title">✏️ Editar comida</div>
+    <input class="field-inp" type="text" id="edit-item-name-${itemKey}" value="${escH(it.name)}" placeholder="Nome *" style="width:100%;margin-bottom:8px" />
+    <div class="img-drop-zone"><input type="file" accept="image/*" data-edit-img-input />
+      <div data-edit-img-prompt><p>📷 Trocar foto</p></div>
+      <div data-edit-img-preview style="display:none"><div class="img-preview-wrap"><img class="img-preview" data-edit-img-el alt="" /><button type="button" class="img-clear-btn" data-edit-img-clear>✕</button></div></div>
+    </div>
+    <div class="editor-actions"><button type="button" class="editor-cancel" data-item-cancel>Cancelar</button><button type="button" class="editor-save" data-item-save>Salvar</button></div>`;
+}
+
+function buildAttractionEditorHtml(itemKey, it) {
+  return `<div class="inline-editor-title">✏️ Editar atração</div>
+    <input class="field-inp" type="text" id="edit-item-name-${itemKey}" value="${escH(it.name || it.text)}" placeholder="Nome *" style="width:100%;margin-bottom:8px" />
+    <div class="img-drop-zone"><input type="file" accept="image/*" data-edit-img-input />
+      <div data-edit-img-prompt><p>📷 Foto (opcional)</p></div>
+      <div data-edit-img-preview style="display:none"><div class="img-preview-wrap"><img class="img-preview" data-edit-img-el alt="" /><button type="button" class="img-clear-btn" data-edit-img-clear>✕</button></div></div>
+    </div>
+    <div class="editor-actions"><button type="button" class="editor-cancel" data-item-cancel>Cancelar</button><button type="button" class="editor-save" data-item-save>Salvar</button></div>`;
+}
+
+function buildLodgingEditorHtml(itemKey, it) {
+  return `<div class="inline-editor-title">✏️ Editar hospedagem</div>
+    <input class="field-inp" type="text" id="edit-item-name-${itemKey}" value="${escH(it.name)}" placeholder="Nome *" style="width:100%;margin-bottom:8px" />
+    <div class="img-drop-zone" style="margin-bottom:8px"><input type="file" accept="image/*" data-edit-img-input />
+      <div data-edit-img-prompt><p>📷 Trocar imagem</p></div>
+      <div data-edit-img-preview style="display:none"><div class="img-preview-wrap"><img class="img-preview" data-edit-img-el alt="" /><button type="button" class="img-clear-btn" data-edit-img-clear>✕</button></div></div>
+    </div>
+    <input class="field-inp" type="url" id="edit-item-url-${itemKey}" value="${escH(it.bookingUrl || '')}" placeholder="Link de reservas (opcional)" style="width:100%" />
+    <div class="editor-actions"><button type="button" class="editor-cancel" data-item-cancel>Cancelar</button><button type="button" class="editor-save" data-item-save>Salvar</button></div>`;
+}
+
+function buildTourEditorHtml(itemKey, it) {
+  return `<div class="inline-editor-title">✏️ Editar passeio</div>
+    <input class="field-inp" type="text" id="edit-item-name-${itemKey}" value="${escH(it.name || it.text)}" placeholder="Nome *" style="width:100%;margin-bottom:8px" />
+    <textarea class="field-inp" id="edit-item-note-${itemKey}" rows="2" placeholder="Observações" style="width:100%">${escH(it.note || '')}</textarea>
+    <div class="editor-actions"><button type="button" class="editor-cancel" data-item-cancel>Cancelar</button><button type="button" class="editor-save" data-item-save>Salvar</button></div>`;
+}
+
+function buildGenericEditorHtml(itemKey, it) {
+  return `<div class="inline-editor-title">✏️ Editar item</div>
+    <input class="field-inp" type="text" id="edit-item-name-${itemKey}" value="${escH(it.text || it.name || '')}" placeholder="Nome *" style="width:100%" />
+    <div class="editor-actions"><button type="button" class="editor-cancel" data-item-cancel>Cancelar</button><button type="button" class="editor-save" data-item-save>Salvar</button></div>`;
+}
+
+async function saveTravelItemEditor(travelKey, catKey, itemKey, it) {
+  const editor = document.getElementById(`travel-item-editor-${itemKey}`);
+  const name = document.getElementById(`edit-item-name-${itemKey}`)?.value.trim();
+  if (!name) { showToast('O nome não pode estar vazio.'); return; }
+
+  const updates = { name, addedAt: it.addedAt || Date.now() };
+  if (it.type) updates.type = it.type;
+
+  if (it.type === 'food' || (catKey === 'culinaria' && !it.restaurantKey)) {
+    updates.type = 'food';
+    const image = getEditorImage(editor, it.image || '');
+    if (!image) { showToast('A comida precisa de uma foto.'); return; }
+    updates.image = image;
+  } else if (it.type === 'attraction' || catKey === 'atracoes') {
+    updates.type = 'attraction';
+    updates.image = getEditorImage(editor, it.image || '');
+  } else if (it.type === 'lodging' || catKey === 'hospedagem') {
+    updates.type = 'lodging';
+    const image = getEditorImage(editor, it.image || '');
+    if (!image) { showToast('A hospedagem precisa de uma imagem.'); return; }
+    updates.image = image;
+    updates.bookingUrl = document.getElementById(`edit-item-url-${itemKey}`)?.value.trim() || '';
+  } else if (it.type === 'tour' || catKey === 'passeios') {
+    updates.type = 'tour';
+    updates.note = document.getElementById(`edit-item-note-${itemKey}`)?.value.trim() || '';
+  } else {
+    updates.text = name;
+  }
+
   try {
-    await push(ref(db, `travels/${destKey}/cats/${catKey}/items`), { text, addedAt: Date.now() });
-    inp.value = '';
+    await update(ref(db, itemDbPath(travelKey, catKey, itemKey)), updates);
+    showToast('Salvo! ✓');
+    editor?.remove();
   } catch {
-    showToast('Erro.');
+    showToast('Erro ao salvar.');
   }
 }
 
-async function removeDestItem(destKey, catKey, itemKey) {
-  try {
-    await remove(ref(db, `travels/${destKey}/cats/${catKey}/items/${itemKey}`));
-  } catch {
-    showToast('Erro.');
+function renderTravelItemCard(travelKey, catKey, itemKey, it) {
+  const actions = (btnKey, editable) => itemActionBtns(btnKey, editable);
+
+  if (it.type === 'restaurant' || (catKey === 'culinaria' && it.restaurantKey)) {
+    const rk = it.restaurantKey;
+    const r = state.restaurantsData[rk];
+    if (!r) {
+      return `<div class="travel-item-card rest-linked" data-travel-item="${itemKey}">${actions(itemKey, false)}
+        <div class="travel-rest-inner"><div class="travel-item-title">Restaurante removido</div><span class="travel-item-sub">Referência ${escH(rk)}</span></div></div>`;
+    }
+    const stars = r.visited && r.stars ? renderStarsHtml(r.stars) : '';
+    const linkBtn = r.link
+      ? `<button type="button" class="rest-action-btn" data-rest-open="${escH(r.link)}" style="margin-top:8px">📍 Abrir no Maps</button>`
+      : '';
+    return `<div class="travel-item-card rest-linked" data-travel-item="${itemKey}">${actions(itemKey, false)}
+      <div class="travel-rest-inner">
+        <div class="travel-item-title">${escH(r.name)}</div>
+        <span class="travel-item-badge">${r.visited ? '✓ Já fomos' : 'Quero ir'}</span>
+        ${stars ? `<div style="margin-top:6px">${stars}</div>` : ''}
+        ${r.note ? `<div class="travel-item-sub" style="font-style:italic;margin-top:6px">"${escH(r.note)}"</div>` : ''}
+        ${linkBtn}
+        <p class="travel-item-sub" style="margin-top:8px">Edite na aba Restaurantes</p>
+      </div></div>`;
   }
+
+  if (it.type === 'food' || (catKey === 'culinaria' && it.name && !it.restaurantKey)) {
+    const img = it.image ? `<img class="travel-item-thumb" src="${escH(it.image)}" alt="" />` : '';
+    return `<div class="travel-item-card ${it.image ? 'has-img' : ''}" data-travel-item="${itemKey}">${actions(itemKey)}${img}
+      <div class="travel-item-body"><div class="travel-item-title">${escH(it.name)}</div><span class="travel-item-badge">Comida</span></div></div>`;
+  }
+
+  if (it.type === 'attraction' || catKey === 'atracoes') {
+    const img = it.image ? `<img class="travel-item-thumb" src="${escH(it.image)}" alt="" />` : '';
+    return `<div class="travel-item-card ${it.image ? 'has-img' : ''}" data-travel-item="${itemKey}">${actions(itemKey)}${img}
+      <div class="travel-item-body"><div class="travel-item-title">${escH(it.name || it.text)}</div><span class="travel-item-badge">Atração</span></div></div>`;
+  }
+
+  if (it.type === 'lodging' || catKey === 'hospedagem') {
+    const img = it.image ? `<img class="travel-item-thumb" src="${escH(it.image)}" alt="" />` : '';
+    const book = it.bookingUrl
+      ? `<button type="button" class="rest-action-btn" data-booking-open="${escH(it.bookingUrl)}" style="margin-top:8px">🔗 Reservar</button>`
+      : '';
+    return `<div class="travel-item-card ${it.image ? 'has-img' : ''}" data-travel-item="${itemKey}">${actions(itemKey)}${img}
+      <div class="travel-item-body"><div class="travel-item-title">${escH(it.name)}</div>${book}</div></div>`;
+  }
+
+  if (it.type === 'tour' || catKey === 'passeios') {
+    return `<div class="travel-item-card" data-travel-item="${itemKey}">${actions(itemKey)}
+      <div class="travel-item-body"><div class="travel-item-title">${escH(it.name || it.text)}</div>
+      ${it.note ? `<div class="travel-item-sub">${escH(it.note)}</div>` : ''}</div></div>`;
+  }
+
+  return `<div class="travel-item-card" data-travel-item="${itemKey}">${actions(itemKey)}
+    <div class="travel-item-body"><div class="travel-item-title">${escH(it.text || it.name || 'Item')}</div></div></div>`;
 }
+
+// ── Init ──
 
 export function initTravels() {
-  document.getElementById('addDestBtn').addEventListener('click', handleAddDest);
-  document.getElementById('destName').addEventListener('keydown', e => e.key === 'Enter' && handleAddDest());
+  document.getElementById('addDestBtn')?.addEventListener('click', handleAddDest);
+  document.getElementById('destName')?.addEventListener('keydown', e => e.key === 'Enter' && handleAddDest());
+  document.getElementById('travelBackBtn')?.addEventListener('click', showListView);
+  document.getElementById('travelEditDestBtn')?.addEventListener('click', toggleDestEditor);
+  document.getElementById('travelDeleteBtn')?.addEventListener('click', () => {
+    if (state.activeTravelKey) removeDest(state.activeTravelKey);
+  });
+
+  const coverDrop = document.getElementById('destCoverDrop');
+  document.getElementById('destCoverInput')?.addEventListener('change', async e => {
+    const f = e.target.files[0];
+    if (f) setDestCoverPreview(await compressImage(f), f.name);
+  });
+  document.getElementById('destCoverClear')?.addEventListener('click', clearDestCover);
+  coverDrop?.addEventListener('dragover', e => { e.preventDefault(); coverDrop.classList.add('drag-over'); });
+  coverDrop?.addEventListener('dragleave', () => coverDrop.classList.remove('drag-over'));
+  coverDrop?.addEventListener('drop', async e => {
+    e.preventDefault();
+    coverDrop.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f?.type.startsWith('image/')) setDestCoverPreview(await compressImage(f), f.name);
+  });
 }

@@ -1,11 +1,11 @@
 import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db } from './firebase.js';
 import { state } from './state.js';
-import { setStatus } from './utils.js';
+import { setStatus, showToast } from './utils.js';
 import { initAuth } from './auth.js';
 import { initGifts, renderGiftsGrid, updateGiftCounts } from './gifts.js';
 import { initRestaurants, renderRestaurants, renderTagFilters, renderAddRestTags, updateMapMarkers } from './restaurants.js';
-import { initTravels, renderTravels } from './travels.js';
+import { initTravels, renderTravels, renderTravelRestBanner } from './travels.js';
 
 const SECTIONS = ['gifts', 'restaurants', 'travels'];
 let listenersStarted = false;
@@ -34,8 +34,19 @@ export function setSection(s) {
     document.getElementById('panel-' + id).classList.toggle('active', id === s);
   });
   if (s === 'gifts') renderGiftsGrid();
-  if (s === 'restaurants') { renderTagFilters(); renderAddRestTags(); renderRestaurants(); }
-  if (s === 'travels') renderTravels();
+  if (s === 'restaurants') {
+    renderTagFilters();
+    renderAddRestTags();
+    renderRestaurants();
+    renderTravelRestBanner();
+  }
+  if (s === 'travels') {
+    if (!state.activeTravelKey) {
+      document.getElementById('travelsListView')?.removeAttribute('hidden');
+      document.getElementById('travelDetailView')?.setAttribute('hidden', '');
+    }
+    renderTravels();
+  }
 }
 
 export function startListeners() {
@@ -70,6 +81,7 @@ export function startListeners() {
   onValue(ref(db, 'travels'), snap => {
     state.travelsData = snap.val() || {};
     if (state.activeSection === 'travels') renderTravels();
+    if (state.pendingTravelRestaurant) renderTravelRestBanner();
   }, () => setStatus('error'));
 }
 
@@ -77,6 +89,12 @@ function initNavigation() {
   SECTIONS.forEach(id => {
     document.getElementById('nav-' + id).addEventListener('click', () => setSection(id));
   });
+  window.__goRestaurantsForTravel = () => {
+    setSection('restaurants');
+    renderTravelRestBanner();
+    showToast('Cadastre o restaurante — ele será vinculado à viagem.');
+  };
+  window.__goTravels = () => setSection('travels');
 }
 
 async function bootstrap() {

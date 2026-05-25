@@ -1,7 +1,7 @@
-import { ref, push, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { ref, push, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { db } from './firebase.js';
 import { state } from './state.js';
-import { showToast, esc, escH, domain, compressImage } from './utils.js';
+import { showToast, escH, domain, compressImage } from './utils.js';
 
 async function fetchOG(url) {
   const r = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
@@ -48,6 +48,92 @@ export function updateGiftCounts() {
   document.getElementById('count-hers').textContent = Object.keys(state.giftsData.hers).length;
 }
 
+function bindGiftEditorImage(editorEl, existingImage) {
+  const input = editorEl.querySelector('[data-edit-img-input]');
+  const prompt = editorEl.querySelector('[data-edit-img-prompt]');
+  const preview = editorEl.querySelector('[data-edit-img-preview]');
+  const imgEl = editorEl.querySelector('[data-edit-img-el]');
+  const clearBtn = editorEl.querySelector('[data-edit-img-clear]');
+
+  if (existingImage) {
+    editorEl.dataset.newImage = existingImage;
+    prompt.style.display = 'none';
+    preview.style.display = 'block';
+    imgEl.src = existingImage;
+  }
+
+  input?.addEventListener('change', async () => {
+    const f = input.files[0];
+    if (!f) return;
+    const b64 = await compressImage(f);
+    editorEl.dataset.newImage = b64;
+    prompt.style.display = 'none';
+    preview.style.display = 'block';
+    imgEl.src = b64;
+  });
+  clearBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    delete editorEl.dataset.newImage;
+    prompt.style.display = 'block';
+    preview.style.display = 'none';
+    imgEl.src = '';
+    input.value = '';
+  });
+}
+
+function openGiftEditor(key) {
+  const editorId = `gift-editor-${key}`;
+  const existing = document.getElementById(editorId);
+  if (existing) { existing.remove(); document.querySelector(`[data-gift-key="${key}"]`)?.classList.remove('editing'); return; }
+
+  const g = state.giftsData[state.activeGiftTab][key];
+  const card = document.querySelector(`[data-gift-key="${key}"]`);
+  if (!card || !g) return;
+
+  card.classList.add('editing');
+  const div = document.createElement('div');
+  div.className = 'inline-editor';
+  div.id = editorId;
+  div.innerHTML = `
+    <div class="inline-editor-title">✏️ Editar presente</div>
+    <div class="editor-row">
+      <input class="field-inp" type="text" id="edit-gift-title-${key}" value="${escH(g.title)}" placeholder="Nome do presente *" style="width:100%" />
+    </div>
+    <div class="img-drop-zone" style="margin-top:8px">
+      <input type="file" accept="image/*" data-edit-img-input />
+      <div data-edit-img-prompt><p>📷 Trocar foto</p><span>Deixe em branco para manter a atual</span></div>
+      <div data-edit-img-preview style="display:none"><div class="img-preview-wrap">
+        <img class="img-preview" data-edit-img-el alt="" />
+        <button type="button" class="img-clear-btn" data-edit-img-clear>✕</button>
+      </div></div>
+    </div>
+    <div class="editor-actions">
+      <button type="button" class="editor-cancel" data-gift-cancel="${key}">Cancelar</button>
+      <button type="button" class="editor-save" data-gift-save="${key}">Salvar</button>
+    </div>`;
+
+  card.appendChild(div);
+  bindGiftEditorImage(div, g.image || '');
+  div.querySelector(`[data-gift-cancel="${key}"]`).addEventListener('click', e => { e.stopPropagation(); openGiftEditor(key); });
+  div.querySelector(`[data-gift-save="${key}"]`).addEventListener('click', e => { e.stopPropagation(); saveGiftEditor(key); });
+}
+
+async function saveGiftEditor(key) {
+  const editor = document.getElementById(`gift-editor-${key}`);
+  const g = state.giftsData[state.activeGiftTab][key];
+  const title = document.getElementById(`edit-gift-title-${key}`)?.value.trim();
+  if (!title) { showToast('O nome não pode estar vazio.'); return; }
+  const image = editor?.dataset.newImage !== undefined ? (editor.dataset.newImage || '') : (g.image || '');
+  try {
+    await update(ref(db, `gifts/${state.activeGiftTab}/${key}`), { title, image });
+    showToast('Presente atualizado! ✓');
+    document.getElementById(`gift-editor-${key}`)?.remove();
+    document.querySelector(`[data-gift-key="${key}"]`)?.classList.remove('editing');
+  } catch {
+    showToast('Erro ao salvar.');
+  }
+}
+
 export function renderGiftsGrid() {
   const grid = document.getElementById('giftsGrid');
   const entries = Object.entries(state.giftsData[state.activeGiftTab])
@@ -58,21 +144,27 @@ export function renderGiftsGrid() {
   }
   grid.innerHTML = entries.map(([key, g]) => `
     <div class="gift-card" data-gift-key="${key}">
+      <div class="card-top-actions">
+        <button type="button" class="edit-btn" data-gift-edit="${key}" title="Editar">✏️</button>
+        <button type="button" class="del-btn" data-gift-del="${key}" title="Remover">✕</button>
+      </div>
       ${g.image ? `<img class="gift-img" src="${escH(g.image)}" alt="" onerror="this.outerHTML='<div class=gift-img-placeholder>🎁</div>'">` : `<div class="gift-img-placeholder">🎁</div>`}
       <div class="gift-info">
         <div class="gift-title">${escH(g.title)}</div>
         ${g.url ? `<div class="gift-domain">${escH(domain(g.url))}</div>` : ''}
       </div>
-      <button type="button" class="del-btn" data-gift-del="${key}">✕</button>
     </div>`).join('');
 
   grid.querySelectorAll('.gift-card').forEach(card => {
     const key = card.dataset.giftKey;
     const g = state.giftsData[state.activeGiftTab][key];
     card.addEventListener('click', e => {
-      if (e.target.closest('[data-gift-del]')) return;
+      if (e.target.closest('.card-top-actions, .inline-editor')) return;
       if (g?.url) window.open(g.url, '_blank');
     });
+  });
+  grid.querySelectorAll('[data-gift-edit]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openGiftEditor(btn.dataset.giftEdit); });
   });
   grid.querySelectorAll('[data-gift-del]').forEach(btn => {
     btn.addEventListener('click', e => { e.stopPropagation(); removeGift(btn.dataset.giftDel); });
