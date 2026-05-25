@@ -1,0 +1,19 @@
+<div class="tabs-wrap">
+  <button class="tab-btn active" id="tab-mine" data-gift-tab="mine">💙 Presentes de Caio <span class="tab-count" id="count-mine">0</span></button>
+  <button class="tab-btn" id="tab-hers" data-gift-tab="hers">🩷 Presentes de Clarice <span class="tab-count" id="count-hers">0</span></button>
+</div>
+<div class="add-section">
+  <h3 id="gift-add-title">Adicionar presente (Caio)</h3>
+  <div class="input-row">
+    <input class="field-inp" id="urlInp" type="url" placeholder="Cole o link do presente aqui..." autocomplete="off" />
+    <button class="add-btn" id="addGiftBtn"><span id="addGiftBtnInner">+ Adicionar</span></button>
+  </div>
+  <div class="name-row"><input class="field-inp" id="nameInp" type="text" placeholder="Nome do presente (obrigatório se não tiver link)" /></div>
+  <div class="img-drop-zone" id="dropZone">
+    <input type="file" id="imgFileInput" accept="image/*" />
+    <div id="dropPrompt"><p>📎 Arraste uma imagem, cole (Ctrl+V) ou clique para escolher</p><span>Opcional — substitui a imagem do link</span></div>
+    <div id="dropPreview" style="display:none"><div class="img-preview-wrap"><img class="img-preview" id="imgPreviewEl" src="" alt="preview" /><span class="img-preview-name" id="imgPreviewName"></span><button type="button" class="img-clear-btn" id="imgClearBtn">✕</button></div></div>
+  </div>
+  <div class="err-msg" id="giftErrMsg" style="display:none"></div>
+</div>
+<div class="gifts-grid" id="giftsGrid"></div>

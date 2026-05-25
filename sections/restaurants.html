@@ -1,0 +1,45 @@
+<div class="add-section" style="margin-top:1.5rem">
+  <h3>🍽️ Adicionar Restaurante</h3>
+  <div class="input-row" style="margin-bottom:10px">
+    <input class="field-inp" id="restName" type="text" placeholder="Nome do restaurante *" />
+  </div>
+  <div class="input-row">
+    <input class="field-inp" id="restLink" type="url" placeholder="Link do Google Maps (opcional)" />
+  </div>
+  <div style="margin-top:10px">
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">CATEGORIAS</div>
+    <div class="editor-tags-wrap" id="addRestTagsWrap"></div>
+  </div>
+  <div class="toggle-row">
+    <span class="toggle-label-left active" id="toggleLabelNo">Ainda não</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="restVisitedToggle" />
+      <span class="toggle-track"></span>
+    </label>
+    <span class="toggle-label-right" id="toggleLabelYes">Já fomos!</span>
+  </div>
+  <div id="restStarsRow" style="display:none;margin-top:10px">
+    <div class="half-star-row" id="addStarRow"><label>Nota:</label></div>
+    <div class="name-row" style="margin-top:8px">
+      <textarea class="field-inp" id="restNoteInp" rows="2" placeholder="Observações (prato favorito, ambiente, etc.)"></textarea>
+    </div>
+  </div>
+  <div style="margin-top:12px">
+    <button class="add-btn" id="addRestBtn"><span id="addRestBtnInner">+ Adicionar</span></button>
+  </div>
+  <div class="err-msg" id="restErrMsg" style="display:none"></div>
+</div>
+
+<div class="rest-toolbar">
+  <div class="rest-toolbar-top">
+    <div class="rest-search-wrap">
+      <span class="rest-search-icon">🔍</span>
+      <input class="rest-search" id="restSearch" type="text" placeholder="Pesquisar restaurante..." />
+    </div>
+    <button type="button" class="map-toggle-btn" id="mapToggleBtn">🗺️ Mapa</button>
+  </div>
+  <div class="rest-tags-row" id="restTagsFilterRow"></div>
+</div>
+
+<div id="restMap"></div>
+<div class="rest-list" id="restList"></div>
