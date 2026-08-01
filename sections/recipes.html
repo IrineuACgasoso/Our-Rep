@@ -10,7 +10,7 @@
   <div class="recipe-ing-chips" id="recipeIngChips"></div>
 
   <div class="name-row" style="margin-top:10px">
-    <textarea class="field-inp" id="recipeInstrInp" rows="3" placeholder="Maneira de fazer (opcional)"></textarea>
+    <textarea class="field-inp" id="recipeInstrInp" rows="3" placeholder="Modo de preparo (opcional)"></textarea>
   </div>
 
   <div class="input-row" style="margin-top:10px">
@@ -45,4 +45,11 @@
   </div>
 </div>
 
-<div class="recipes-grid" id="recipesGrid"></div>
+<div id="recipesListView">
+  <div class="recipes-grid" id="recipesGrid"></div>
+</div>
+
+<div id="recipeDetailView" class="recipe-detail-view" hidden>
+  <button type="button" class="travel-back-btn" id="recipeBackBtn">← Voltar</button>
+  <div id="recipeDetailContent"></div>
+</div>

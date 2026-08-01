@@ -119,55 +119,64 @@ function loadRecipeIntoForm(key) {
   document.getElementById('recipeNameInp').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function deleteRecipe(key) {
+async function deleteRecipe(key, fromDetail = false) {
   const r = state.recipesData[key];
   if (!confirm(`Remover a receita "${r?.name || ''}"? Essa ação não pode ser desfeita.`)) return;
   try {
     await remove(ref(db, `recipes/${key}`));
     if (state.activeRecipeKey === key) resetDraftForm();
     showToast('Receita removida.');
+    if (fromDetail) showRecipesList();
   } catch {
     showToast('Erro ao remover.');
   }
 }
 
-function toggleRecipeDetail(key) {
-  const card = document.querySelector(`[data-recipe-key="${key}"]`);
-  const existing = card?.querySelector('.recipe-detail');
-  if (existing) { existing.remove(); return; }
-  document.querySelectorAll('.recipe-detail').forEach(el => el.remove());
-  if (!card) return;
+function showRecipesList() {
+  document.getElementById('recipesListView')?.removeAttribute('hidden');
+  document.getElementById('recipeDetailView')?.setAttribute('hidden', '');
+  renderRecipesGrid();
+}
 
+function openRecipeDetail(key) {
   const r = state.recipesData[key];
+  if (!r) return;
+
+  document.getElementById('recipesListView')?.setAttribute('hidden', '');
+  const detailView = document.getElementById('recipeDetailView');
+  detailView?.removeAttribute('hidden');
+
   const ingsHtml = (r.ingredients || []).map(i => `<li>${escH(i)}</li>`).join('');
   const linkBtn = r.link
     ? `<button type="button" class="rest-action-btn" data-recipe-open-link="${escH(r.link)}">🔗 Ver origem</button>`
     : '';
 
-  const div = document.createElement('div');
-  div.className = 'recipe-detail';
-  div.innerHTML = `
-    <h4>Ingredientes</h4>
-    <ul class="recipe-detail-ings">${ingsHtml}</ul>
-    ${r.instructions ? `<h4>Maneira de fazer</h4><p class="recipe-detail-instr">${escH(r.instructions)}</p>` : ''}
-    <div class="recipe-detail-actions">
-      ${linkBtn}
-      <button type="button" class="rest-action-btn" data-recipe-edit="${key}">✏️ Editar</button>
-      <button type="button" class="rest-action-btn danger" data-recipe-del="${key}">🗑️ Remover</button>
+  const content = document.getElementById('recipeDetailContent');
+  content.innerHTML = `
+    <div class="recipe-detail-card">
+      ${r.image ? `<img class="recipe-detail-img" src="${escH(r.image)}" alt="" onerror="this.outerHTML='<div class=recipe-detail-placeholder>🍇</div>'">` : `<div class="recipe-detail-placeholder">🍇</div>`}
+      <div class="recipe-detail-body">
+        <h2>${escH(r.name)}</h2>
+        <h4>Ingredientes</h4>
+        <ul class="recipe-detail-ings">${ingsHtml}</ul>
+        ${r.instructions ? `<h4>Maneira de fazer</h4><p class="recipe-detail-instr">${escH(r.instructions)}</p>` : ''}
+        <div class="recipe-detail-actions">
+          ${linkBtn}
+          <button type="button" class="rest-action-btn" data-recipe-edit="${key}">✏️ Editar</button>
+          <button type="button" class="rest-action-btn danger" data-recipe-del="${key}">🗑️ Remover</button>
+        </div>
+      </div>
     </div>`;
-  card.appendChild(div);
 
-  div.querySelector('[data-recipe-open-link]')?.addEventListener('click', e => {
-    e.stopPropagation();
-    window.open(e.currentTarget.dataset.recipeOpenLink, '_blank');
+  content.querySelector('[data-recipe-open-link]')?.addEventListener('click', () => {
+    window.open(r.link, '_blank');
   });
-  div.querySelector('[data-recipe-edit]')?.addEventListener('click', e => {
-    e.stopPropagation();
+  content.querySelector('[data-recipe-edit]')?.addEventListener('click', () => {
     loadRecipeIntoForm(key);
+    showRecipesList();
   });
-  div.querySelector('[data-recipe-del]')?.addEventListener('click', e => {
-    e.stopPropagation();
-    deleteRecipe(key);
+  content.querySelector('[data-recipe-del]')?.addEventListener('click', () => {
+    deleteRecipe(key, true);
   });
 }
 
@@ -194,9 +203,9 @@ export function renderRecipesGrid() {
       </div>
     </div>`).join('');
 
-  grid.querySelectorAll('.recipe-card').forEach(card => {
-    card.addEventListener('click', () => toggleRecipeDetail(card.dataset.recipeKey));
-  });
+    grid.querySelectorAll('.recipe-card').forEach(card => {
+    card.addEventListener('click', () => openRecipeDetail(card.dataset.recipeKey));
+    });
 }
 
 export function renderRecipes() {
@@ -243,4 +252,5 @@ export function initRecipes() {
   document.getElementById('saveRecipeBtn').addEventListener('click', handleSaveRecipe);
   document.getElementById('cancelRecipeEditBtn').addEventListener('click', resetDraftForm);
   document.getElementById('recipeSearch').addEventListener('input', renderRecipesGrid);
+  document.getElementById('recipeBackBtn')?.addEventListener('click', showRecipesList);
 }
