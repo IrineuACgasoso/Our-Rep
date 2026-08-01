@@ -1,0 +1,26 @@
+.recipe-ing-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.recipe-ing-chip { display:flex; align-items:center; gap:6px; padding:5px 8px 5px 12px; border-radius:50px; background:var(--acc-pale); color:var(--acc-dark); font-size:12px; font-weight:600; }
+.recipe-ing-chip button { background:none; border:none; color:var(--acc-dark); font-size:13px; cursor:pointer; line-height:1; padding:2px; opacity:.75; }
+.recipe-ing-chip button:hover { opacity:1; }
+
+.recipes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(165px,1fr)); gap:16px; padding:1.5rem; }
+.recipe-card { background:var(--card); border-radius:16px; border:1px solid var(--border2); overflow:hidden; cursor:pointer; transition:transform .2s,box-shadow .2s; position:relative; animation:fadeUp .35s ease both; }
+.recipe-card:hover { transform:translateY(-4px); box-shadow:0 14px 36px rgba(0,0,0,.6); }
+.recipe-img { width:100%; height:150px; object-fit:cover; display:block; background:var(--bg2); }
+.recipe-img-placeholder { width:100%; height:150px; background:linear-gradient(135deg,var(--acc-pale),var(--border2)); display:flex; align-items:center; justify-content:center; font-size:44px; }
+.recipe-info { padding:12px 14px 14px; }
+.recipe-title { font-family:'Playfair Display',serif; font-size:14px; font-weight:600; color:var(--text); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.recipe-ing-count { font-size:11px; color:var(--text-muted); margin-top:5px; }
+
+.recipe-detail { padding:14px 16px; background:var(--bg); border-top:1px solid var(--border2); animation:fadeUp .25s ease both; }
+.recipe-detail h4 { font-size:12px; color:var(--acc-deep); font-weight:700; margin:10px 0 6px; }
+.recipe-detail h4:first-child { margin-top:0; }
+.recipe-detail-ings { list-style:none; padding:0; margin:0; }
+.recipe-detail-ings li { font-size:13px; color:var(--text); padding:4px 0; padding-left:16px; position:relative; }
+.recipe-detail-ings li::before { content:'•'; color:var(--acc); position:absolute; left:0; }
+.recipe-detail-instr { font-size:13px; color:var(--text-muted); line-height:1.6; white-space:pre-wrap; }
+.recipe-detail-actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+
+@media(max-width:480px){
+  .recipes-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;padding:1rem;}
+}

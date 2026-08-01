@@ -6,16 +6,17 @@ import { initAuth } from './auth.js';
 import { initGifts, renderGiftsGrid, updateGiftCounts } from './gifts.js';
 import { initRestaurants, renderRestaurants, renderTagFilters, renderAddRestTags, updateMapMarkers } from './restaurants.js';
 import { initTravels, renderTravels, renderTravelRestBanner } from './travels.js';
+import { initRecipes, renderRecipes } from './recipes.js';
 
-const SECTIONS = ['gifts', 'restaurants', 'travels'];
+const SECTIONS = ['gifts', 'restaurants', 'travels', 'recipes'];
 let listenersStarted = false;
 
-/** Carrega HTML parcial de cada aba */
 async function loadSections() {
   const panels = {
     gifts: 'panel-gifts',
     restaurants: 'panel-restaurants',
-    travels: 'panel-travels'
+    travels: 'panel-travels',
+    recipes: 'panel-recipes'
   };
   await Promise.all(
     Object.entries(panels).map(async ([name, panelId]) => {
@@ -47,6 +48,7 @@ export function setSection(s) {
     }
     renderTravels();
   }
+  if (s === 'recipes') renderRecipes();
 }
 
 export function startListeners() {
@@ -83,6 +85,11 @@ export function startListeners() {
     if (state.activeSection === 'travels') renderTravels();
     if (state.pendingTravelRestaurant) renderTravelRestBanner();
   }, () => setStatus('error'));
+
+  onValue(ref(db, 'recipes'), snap => {
+    state.recipesData = snap.val() || {};
+    if (state.activeSection === 'recipes') renderRecipes();
+  }, () => setStatus('error'));
 }
 
 function initNavigation() {
@@ -104,6 +111,7 @@ async function bootstrap() {
     initGifts();
     initRestaurants();
     initTravels();
+    initRecipes();
     initAuth(startListeners);
     setSection(state.activeSection);
   } catch (err) {
@@ -115,7 +123,6 @@ async function bootstrap() {
 
 bootstrap();
 
-// Service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }

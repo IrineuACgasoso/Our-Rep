@@ -1,0 +1,48 @@
+<div class="add-section" style="margin-top:1.5rem">
+  <h3 id="recipeFormTitle">🍇 Nova Receita</h3>
+  <div class="input-row" style="margin-bottom:10px">
+    <input class="field-inp" id="recipeNameInp" type="text" placeholder="Nome da receita *" />
+  </div>
+
+  <div class="input-row">
+    <input class="field-inp" id="recipeIngInp" type="text" placeholder="Ingrediente + Enter para adicionar" />
+  </div>
+  <div class="recipe-ing-chips" id="recipeIngChips"></div>
+
+  <div class="name-row" style="margin-top:10px">
+    <textarea class="field-inp" id="recipeInstrInp" rows="3" placeholder="Maneira de fazer (opcional)"></textarea>
+  </div>
+
+  <div class="input-row" style="margin-top:10px">
+    <input class="field-inp" id="recipeLinkInp" type="url" placeholder="Link da receita (Instagram, YouTube, TikTok...) — opcional" />
+  </div>
+
+  <div class="img-drop-zone" id="recipeDropZone">
+    <input type="file" id="recipeImgFileInput" accept="image/*" />
+    <div id="recipeDropPrompt"><p>📎 Arraste uma imagem, cole (Ctrl+V) ou clique para escolher</p><span>Opcional — foto da receita</span></div>
+    <div id="recipeDropPreview" style="display:none">
+      <div class="img-preview-wrap">
+        <img class="img-preview" id="recipeImgPreviewEl" src="" alt="preview" />
+        <span class="img-preview-name" id="recipeImgPreviewName"></span>
+        <button type="button" class="img-clear-btn" id="recipeImgClearBtn">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="editor-actions" style="margin-top:12px;justify-content:flex-start">
+    <button class="add-btn" id="saveRecipeBtn"><span id="saveRecipeBtnInner">+ Salvar receita</span></button>
+    <button class="editor-cancel" id="cancelRecipeEditBtn" style="display:none">Cancelar edição</button>
+  </div>
+  <div class="err-msg" id="recipeErrMsg" style="display:none"></div>
+</div>
+
+<div class="rest-toolbar" style="padding-top:.5rem">
+  <div class="rest-toolbar-top">
+    <div class="rest-search-wrap">
+      <span class="rest-search-icon">🔍</span>
+      <input class="rest-search" id="recipeSearch" type="text" placeholder="Pesquisar receita..." />
+    </div>
+  </div>
+</div>
+
+<div class="recipes-grid" id="recipesGrid"></div>

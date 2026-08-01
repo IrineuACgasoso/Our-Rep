@@ -1,4 +1,5 @@
 const CACHE = 'nosso-app-v2';
+const CACHE = 'nosso-app-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -7,9 +8,11 @@ const ASSETS = [
   './css/gifts.css',
   './css/restaurants.css',
   './css/travels.css',
+  './css/recipes.css',
   './sections/gifts.html',
   './sections/restaurants.html',
   './sections/travels.html',
+  './sections/recipes.html',
   './js/app.js',
   './js/auth.js',
   './js/firebase.js',
@@ -17,6 +20,7 @@ const ASSETS = [
   './js/restaurants.js',
   './js/state.js',
   './js/travels.js',
+  './js/recipes.js',
   './js/utils.js'
 ];
 

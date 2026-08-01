@@ -1,4 +1,4 @@
-import { signInWithPopup, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { auth, provider, ALLOWED } from './firebase.js';
 import { showToast } from './utils.js';
 
@@ -16,14 +16,46 @@ function resetLoginBtn() {
   btn.innerHTML = GOOGLE_BTN_HTML;
 }
 
+// Detecta ambientes onde o popup tende a falhar (iOS Safari / PWA standalone / in-app browsers)
+function shouldPreferRedirect() {
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia?.('(display-mode: standalone)')?.matches || window.navigator.standalone === true;
+  const isInApp = /FBAN|FBAV|Instagram|WhatsApp|Line\//i.test(ua);
+  return isIOS || isStandalone || isInApp;
+}
+
 export async function signIn() {
   const btn = document.getElementById('loginBtn');
   btn.disabled = true;
   btn.innerHTML = `<div class="spinner" style="border-top-color:var(--acc);border-color:var(--border2)"></div> Entrando...`;
   showLoginErr('');
+
+  if (shouldPreferRedirect()) {
+    try {
+      await signInWithRedirect(auth, provider);
+    } catch {
+      showLoginErr('Erro ao entrar. Tente novamente.');
+      resetLoginBtn();
+    }
+    return; // a página navega embora; o resultado é tratado em initAuth()
+  }
+
   try {
     await signInWithPopup(auth, provider);
-  } catch {
+  } catch (err) {
+    // Fallback automático pra redirect se o popup falhar (storage bloqueado, etc.)
+    const code = err?.code || '';
+    if (code.includes('popup') || code.includes('web-storage') || code.includes('cancelled')) {
+      try {
+        await signInWithRedirect(auth, provider);
+        return;
+      } catch {
+        showLoginErr('Erro ao entrar. Tente novamente.');
+        resetLoginBtn();
+        return;
+      }
+    }
     showLoginErr('Erro ao entrar. Tente novamente.');
     resetLoginBtn();
   }
@@ -38,6 +70,11 @@ export function initAuth(onAuthenticated) {
   document.getElementById('loginBtn').addEventListener('click', signIn);
   document.querySelector('.logout-btn').addEventListener('click', signOut);
 
+  // Recupera o resultado de um signInWithRedirect, se houver
+  getRedirectResult(auth).catch(() => {
+    showLoginErr('Erro ao entrar. Tente novamente.');
+  });
+
   onAuthStateChanged(auth, user => {
     if (user && ALLOWED.includes(user.email)) {
       document.getElementById('loginScreen').style.display = 'none';
@@ -49,6 +86,7 @@ export function initAuth(onAuthenticated) {
       if (user) { fbSignOut(auth); showLoginErr('Acesso negado.'); }
       document.getElementById('loginScreen').style.display = 'flex';
       document.getElementById('appScreen').style.display = 'none';
+      resetLoginBtn();
     }
   });
 }
