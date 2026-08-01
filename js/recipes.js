@@ -2,6 +2,7 @@ import { ref, push, remove, update } from "https://www.gstatic.com/firebasejs/10
 import { db } from './firebase.js';
 import { state } from './state.js';
 import { showToast, escH, compressImage } from './utils.js';
+import { pushView, popView } from './navstack.js';
 
 function renderIngChips() {
   const wrap = document.getElementById('recipeIngChips');
@@ -132,9 +133,10 @@ async function deleteRecipe(key, fromDetail = false) {
   }
 }
 
-function showRecipesList() {
+function showRecipesList(fromPopstate = false) {
   document.getElementById('recipesListView')?.removeAttribute('hidden');
   document.getElementById('recipeDetailView')?.setAttribute('hidden', '');
+  if (!fromPopstate) popView('recipe-detail');
   renderRecipesGrid();
 }
 
@@ -145,6 +147,8 @@ function openRecipeDetail(key) {
   document.getElementById('recipesListView')?.setAttribute('hidden', '');
   const detailView = document.getElementById('recipeDetailView');
   detailView?.removeAttribute('hidden');
+
+  pushView('recipe-detail', () => showRecipesList(true)); // true = veio do botão voltar do celular
 
   const ingsHtml = (r.ingredients || []).map(i => `<li>${escH(i)}</li>`).join('');
   const linkBtn = r.link

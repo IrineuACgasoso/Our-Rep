@@ -2,6 +2,7 @@ import { ref, push, remove, update } from "https://www.gstatic.com/firebasejs/10
 import { db } from './firebase.js';
 import { state, TRAVEL_CATS } from './state.js';
 import { showToast, escH, compressImage, renderStarsHtml } from './utils.js';
+import { pushView, popView } from './navstack.js';
 
 /** Categorias vazias para um destino novo */
 export function createEmptyTravelCats() {
@@ -144,10 +145,11 @@ function itemActionBtns(itemKey, editable = true) {
 
 // ── Lista / navegação ──
 
-function showListView() {
+function showListView(fromPopstate = false) {
   state.activeTravelKey = null;
   document.getElementById('travelsListView')?.removeAttribute('hidden');
   document.getElementById('travelDetailView')?.setAttribute('hidden', '');
+  if (!fromPopstate) popView('travel-detail');
   renderTravelsList();
 }
 
@@ -156,6 +158,7 @@ export function openTravelDetail(key) {
   state.activeTravelCat = 'culinaria';
   document.getElementById('travelsListView')?.setAttribute('hidden', '');
   document.getElementById('travelDetailView')?.removeAttribute('hidden');
+  pushView('travel-detail', () => showListView(true));
   renderTravelDetail();
 }
 
