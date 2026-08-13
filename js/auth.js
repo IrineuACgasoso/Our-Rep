@@ -1,4 +1,4 @@
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { signInWithRedirect, getRedirectResult, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { auth, provider, ALLOWED } from './firebase.js';
 import { showToast } from './utils.js';
 
@@ -30,32 +30,9 @@ export async function signIn() {
   btn.disabled = true;
   btn.innerHTML = `<div class="spinner" style="border-top-color:var(--acc);border-color:var(--border2)"></div> Entrando...`;
   showLoginErr('');
-
-  if (shouldPreferRedirect()) {
-    try {
-      await signInWithRedirect(auth, provider);
-    } catch {
-      showLoginErr('Erro ao entrar. Tente novamente.');
-      resetLoginBtn();
-    }
-    return; // a página navega embora; o resultado é tratado em initAuth()
-  }
-
   try {
-    await signInWithPopup(auth, provider);
-  } catch (err) {
-    // Fallback automático pra redirect se o popup falhar (storage bloqueado, etc.)
-    const code = err?.code || '';
-    if (code.includes('popup') || code.includes('web-storage') || code.includes('cancelled')) {
-      try {
-        await signInWithRedirect(auth, provider);
-        return;
-      } catch {
-        showLoginErr('Erro ao entrar. Tente novamente.');
-        resetLoginBtn();
-        return;
-      }
-    }
+    await signInWithRedirect(auth, provider);
+  } catch {
     showLoginErr('Erro ao entrar. Tente novamente.');
     resetLoginBtn();
   }
