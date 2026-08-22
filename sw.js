@@ -1,4 +1,3 @@
-const CACHE = 'nosso-app-v2';
 const CACHE = 'nosso-app-v3';
 const ASSETS = [
   './',
