@@ -38,12 +38,23 @@ export async function signIn() {
   }
 }
 
+function isEmbeddedBrowser() {
+  const ua = navigator.userAgent || '';
+  // WhatsApp, Instagram, Facebook, Messenger, Line, Twitter in-app browsers
+  return /FBAN|FBAV|Instagram|WhatsApp|Line\/|Twitter|GSA\//i.test(ua);
+}
+
 export async function signOut() {
   await fbSignOut(auth);
   showToast('Até logo! 👋');
 }
 
 export function initAuth(onAuthenticated) {
+  if (isEmbeddedBrowser()) {
+    showLoginErr('Para entrar com Google, abra este link direto no Safari (não pelo WhatsApp/Instagram). Toque em "⋯" ou no ícone de compartilhar e escolha "Abrir no Safari".');
+    document.getElementById('loginBtn').disabled = true;
+  }
+
   document.getElementById('loginBtn').addEventListener('click', signIn);
   document.querySelector('.logout-btn').addEventListener('click', signOut);
 
