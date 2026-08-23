@@ -10,7 +10,7 @@ export const ALLOWED = [
 
 const firebaseConfig = {
   apiKey: "AIzaSyBduG0oZnA__HxcvQ16f7wC2TlcSgGEuBQ",
-  authDomain: "present-list-98062.firebaseapp.com",
+  authDomain: "our-rep.vercel.app",
   databaseURL: "https://present-list-98062-default-rtdb.firebaseio.com",
   projectId: "present-list-98062",
   storageBucket: "present-list-98062.firebasestorage.app",
