@@ -50,10 +50,3 @@ Firebase, necessário pro login funcionar em produção). Basta conectar o repos
 na Vercel — ela detecta o Vite automaticamente (`npm run build`, saída em `dist/`).
 Configure as mesmas variáveis de ambiente do `.env` nas configurações do projeto na
 Vercel (Settings → Environment Variables).
-
-## Antes de ir pra produção
-
-- Adicione os ícones do PWA em `public/` (veja "Pendências conhecidas" no `CLAUDE.md`) —
-  sem eles o manifest/favicons apontam para arquivos inexistentes.
-- Confirme as regras de segurança do Realtime Database no Firebase Console — a lista
-  `ALLOWED` no client é só UX, a segurança de verdade é nas Database Rules.
