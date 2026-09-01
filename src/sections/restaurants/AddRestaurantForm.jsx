@@ -4,17 +4,22 @@ import { db } from '../../firebase/firebase';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { StarSelector } from '../../components/StarSelector';
+import ImageDropzone from '../../components/ImageDropzone';
+import { PERSON_LABELS, personFromEmail, friendlyDbError } from '../../utils/utils';
 import { linkRestaurantToActiveTravel } from '../travels/TravelActions';
 
 export default function AddRestaurantForm({ tagsData }) {
-  const { pendingTravelRestaurant, setPendingTravelRestaurant, setActiveSection, setReopenTravelKey } = useApp();
+  const { user, pendingTravelRestaurant, setPendingTravelRestaurant, setActiveSection, setReopenTravelKey } = useApp();
   const showToast = useToast();
+  const person = personFromEmail(user?.email);
 
   const [name, setName] = useState('');
   const [link, setLink] = useState('');
   const [visited, setVisited] = useState(false);
-  const [stars, setStars] = useState(0);
+  const [starsCaio, setStarsCaio] = useState(0);
+  const [starsClarice, setStarsClarice] = useState(0);
   const [note, setNote] = useState('');
+  const [photo, setPhoto] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -34,8 +39,10 @@ export default function AddRestaurantForm({ tagsData }) {
         name: n,
         link: link.trim() || '',
         visited,
-        stars: visited ? stars : 0,
+        starsCaio: visited ? starsCaio : 0,
+        starsClarice: visited ? starsClarice : 0,
         note: visited ? note.trim() : '',
+        photo: photo || '',
         tags: selectedTags,
         addedAt: Date.now(),
       });
@@ -45,12 +52,14 @@ export default function AddRestaurantForm({ tagsData }) {
       setName('');
       setLink('');
       setVisited(false);
-      setStars(0);
+      setStarsCaio(0);
+      setStarsClarice(0);
       setNote('');
+      setPhoto('');
       setSelectedTags([]);
       if (!pendingTravelRestaurant) showToast('Restaurante adicionado! 🍽️');
-    } catch {
-      setError('Erro ao salvar.');
+    } catch (err) {
+      setError(friendlyDbError(err, 'Erro ao salvar.'));
     }
     setLoading(false);
   }
@@ -65,6 +74,15 @@ export default function AddRestaurantForm({ tagsData }) {
       <div className="input-row">
         <input className="field-inp" type="url" placeholder="Link do Google Maps (opcional)" value={link}
           onChange={(e) => setLink(e.target.value)} />
+      </div>
+      <div style={{ marginTop: 10 }}>
+        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 600 }}>FOTO (opcional)</div>
+        <ImageDropzone
+          value={photo}
+          onChange={setPhoto}
+          prompt="📎 Arraste, cole (Ctrl+V) ou clique para adicionar uma foto"
+          compact
+        />
       </div>
       <div style={{ marginTop: 10 }}>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 600 }}>CATEGORIAS</div>
@@ -95,7 +113,18 @@ export default function AddRestaurantForm({ tagsData }) {
       </div>
       {visited && (
         <div style={{ marginTop: 10 }}>
-          <StarSelector value={stars} onChange={setStars} />
+          <StarSelector
+            value={starsCaio}
+            onChange={setStarsCaio}
+            label={`Nota do ${PERSON_LABELS.caio}${person === 'caio' ? ' (você)' : ''}:`}
+          />
+          <div style={{ marginTop: 6 }}>
+            <StarSelector
+              value={starsClarice}
+              onChange={setStarsClarice}
+              label={`Nota da ${PERSON_LABELS.clarice}${person === 'clarice' ? ' (você)' : ''}:`}
+            />
+          </div>
           <div className="name-row" style={{ marginTop: 8 }}>
             <textarea className="field-inp" rows={2} placeholder="Observações (prato favorito, ambiente, etc.)"
               value={note} onChange={(e) => setNote(e.target.value)} />

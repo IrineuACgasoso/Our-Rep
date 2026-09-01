@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { pushView, popView } from '../../hooks/navstack';
 import RecipeForm from './RecipeForm';
 import RecipeDetail from './RecipeDetail';
+import SafeImage from '../../components/SafeImage';
 
 export default function RecipesSection() {
   const { recipesData } = useApp();
@@ -62,11 +63,7 @@ export default function RecipesSection() {
         ) : (
           entries.map(([key, r]) => (
             <div key={key} className="recipe-card" onClick={() => openDetail(key)}>
-              {r.image ? (
-                <img className="recipe-img" src={r.image} alt="" onError={(e) => { e.currentTarget.outerHTML = '<div class="recipe-img-placeholder">🍇</div>'; }} />
-              ) : (
-                <div className="recipe-img-placeholder">🍇</div>
-              )}
+              <SafeImage className="recipe-img" placeholderClassName="recipe-img-placeholder" placeholder="🍇" src={r.image} />
               <div className="recipe-info">
                 <div className="recipe-title">{r.name}</div>
                 <div className="recipe-ing-count">

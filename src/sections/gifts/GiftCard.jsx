@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { ref, update, remove } from 'firebase/database';
 import { db } from '../../firebase/firebase';
-import { domain } from '../../utils/utils';
+import { domain, safeExternalUrl } from '../../utils/utils';
 import { useToast } from '../../context/ToastContext';
 import ImageDropzone from '../../components/ImageDropzone';
+import SafeImage from '../../components/SafeImage';
 
 export default function GiftCard({ giftKey, gift, activeTab }) {
   const showToast = useToast();
@@ -49,12 +50,8 @@ export default function GiftCard({ giftKey, gift, activeTab }) {
         <span className="spacer" style={{ flex: 1 }} />
         <button type="button" className="del-btn" title="Remover" onClick={(e) => { e.stopPropagation(); handleDelete(); }}>✕</button>
       </div>
-      <div onClick={() => { if (!editing && gift.url) window.open(gift.url, '_blank'); }} style={{ cursor: gift.url ? 'pointer' : 'default' }}>
-        {gift.image ? (
-          <img className="gift-img" src={gift.image} alt="" onError={(e) => { e.currentTarget.outerHTML = '<div class="gift-img-placeholder">🎁</div>'; }} />
-        ) : (
-          <div className="gift-img-placeholder">🎁</div>
-        )}
+      <div onClick={() => { if (!editing && gift.url) window.open(safeExternalUrl(gift.url), '_blank', 'noopener,noreferrer'); }} style={{ cursor: gift.url ? 'pointer' : 'default' }}>
+        <SafeImage className="gift-img" placeholderClassName="gift-img-placeholder" placeholder="🎁" src={gift.image} />
         <div className="gift-info">
           <div className="gift-title">{gift.title}</div>
           {gift.url && <div className="gift-domain">{domain(gift.url)}</div>}

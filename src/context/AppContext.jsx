@@ -6,6 +6,7 @@ import {
   getRedirectResult,
   signOut as fbSignOut,
   onAuthStateChanged,
+  sendEmailVerification,
 } from 'firebase/auth';
 import { db, auth, provider, ALLOWED } from '../firebase/firebase';
 import { useToast } from './ToastContext';
@@ -40,10 +41,12 @@ export function AppProvider({ children }) {
   // ── Auth ──
   const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [signingIn, setSigningIn] = useState(false);
   const [embeddedBrowser] = useState(() => isEmbeddedBrowser());
+  const [verificationSent, setVerificationSent] = useState(false);
 
   useEffect(() => {
     getRedirectResult(auth).catch(() => setLoginError('Erro ao entrar. Tente novamente.'));
@@ -52,6 +55,7 @@ export function AppProvider({ children }) {
       setAuthLoading(false);
       if (u && ALLOWED.includes(u.email)) {
         setUser(u);
+        setEmailVerified(u.emailVerified);
         setAccessDenied(false);
       } else {
         if (u) {
@@ -59,11 +63,49 @@ export function AppProvider({ children }) {
           setAccessDenied(true);
         }
         setUser(null);
+        setEmailVerified(false);
+        setVerificationSent(false);
         setSigningIn(false);
       }
     });
     return unsub;
   }, []);
+
+  // As Database Rules do Firebase exigem auth.token.email_verified === true. Assim que
+  // detectamos um usuário autorizado mas ainda não verificado, disparamos o e-mail de
+  // confirmação automaticamente (uma vez por sessão) para o usuário poder validar a conta.
+  useEffect(() => {
+    if (user && !emailVerified && !verificationSent) {
+      sendEmailVerification(user)
+        .then(() => setVerificationSent(true))
+        .catch(() => {});
+    }
+  }, [user, emailVerified, verificationSent]);
+
+  async function resendVerification() {
+    if (!auth.currentUser) return;
+    try {
+      await sendEmailVerification(auth.currentUser);
+      setVerificationSent(true);
+      showToast('E-mail de verificação reenviado! Confira sua caixa de entrada.');
+    } catch {
+      showToast('Erro ao enviar o e-mail de verificação. Tente novamente em instantes.');
+    }
+  }
+
+  // Recarrega o usuário atual (após ele clicar no link de confirmação) para reavaliar
+  // emailVerified sem precisar deslogar/logar de novo.
+  async function refreshVerification() {
+    if (!auth.currentUser) return;
+    try {
+      await auth.currentUser.reload();
+      const verified = auth.currentUser.emailVerified;
+      setEmailVerified(verified);
+      if (!verified) showToast('Ainda não encontramos a confirmação. Verifique seu e-mail e tente de novo.');
+    } catch {
+      showToast('Erro ao verificar. Tente novamente.');
+    }
+  }
 
   async function signIn() {
     setSigningIn(true);
@@ -111,15 +153,28 @@ export function AppProvider({ children }) {
   }
 
   // ── Dados em tempo real (Realtime Database) ──
-  const [status, setStatus] = useState('connecting'); // connecting | connected | error
+  const [status, setStatus] = useState('connecting'); // connecting | connected | error | permission-denied
   const [giftsData, setGiftsData] = useState({ mine: {}, hers: {} });
   const [restaurantsData, setRestaurantsData] = useState({});
   const [tagsData, setTagsData] = useState({});
   const [travelsData, setTravelsData] = useState({});
   const [recipesData, setRecipesData] = useState({});
 
+  // As Database Rules exigem e-mail verificado; se o Firebase recusar por PERMISSION_DENIED,
+  // mostramos um status amigável em vez de deixar o app travado num "Erro de conexão" genérico.
+  function handleDbError(err) {
+    if (err?.code === 'PERMISSION_DENIED') {
+      setStatus('permission-denied');
+    } else {
+      setStatus('error');
+    }
+  }
+
   useEffect(() => {
-    if (!user) return;
+    // As regras do Firebase exigem e-mail verificado para ler/escrever, então só assinamos
+    // os listeners depois que o e-mail estiver confirmado — evita chamadas que já sabemos
+    // que vão falhar com PERMISSION_DENIED.
+    if (!user || !emailVerified) return;
 
     const unsubs = [];
     ['mine', 'hers'].forEach((tab) => {
@@ -130,25 +185,25 @@ export function AppProvider({ children }) {
             setGiftsData((prev) => ({ ...prev, [tab]: snap.val() || {} }));
             setStatus('connected');
           },
-          () => setStatus('error')
+          handleDbError
         )
       );
     });
     unsubs.push(
-      onValue(ref(db, 'restaurants'), (snap) => setRestaurantsData(snap.val() || {}), () => setStatus('error'))
+      onValue(ref(db, 'restaurants'), (snap) => setRestaurantsData(snap.val() || {}), handleDbError)
     );
     unsubs.push(
-      onValue(ref(db, 'restTags'), (snap) => setTagsData(snap.val() || {}), () => setStatus('error'))
+      onValue(ref(db, 'restTags'), (snap) => setTagsData(snap.val() || {}), handleDbError)
     );
     unsubs.push(
-      onValue(ref(db, 'travels'), (snap) => setTravelsData(snap.val() || {}), () => setStatus('error'))
+      onValue(ref(db, 'travels'), (snap) => setTravelsData(snap.val() || {}), handleDbError)
     );
     unsubs.push(
-      onValue(ref(db, 'recipes'), (snap) => setRecipesData(snap.val() || {}), () => setStatus('error'))
+      onValue(ref(db, 'recipes'), (snap) => setRecipesData(snap.val() || {}), handleDbError)
     );
 
     return () => unsubs.forEach((unsub) => unsub());
-  }, [user]);
+  }, [user, emailVerified]);
 
   // ── Navegação entre seções + estado compartilhado entre Restaurantes/Viagens ──
   const [activeSection, setActiveSection] = useState('gifts');
@@ -163,12 +218,16 @@ export function AppProvider({ children }) {
     // auth
     authLoading,
     user,
+    emailVerified,
+    verificationSent,
     accessDenied,
     loginError,
     signingIn,
     embeddedBrowser,
     signIn,
     signOut,
+    resendVerification,
+    refreshVerification,
     // dados
     status,
     giftsData,

@@ -19,4 +19,17 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Separa o Firebase (SDK grande, muda pouco) do código do app num chunk próprio,
+        // então o navegador consegue cachear esse chunk entre deploys que só mexem no app,
+        // em vez de invalidar tudo de uma vez. Leaflet já sai em chunk separado sozinho
+        // porque é importado com lazy() em RestaurantSection.
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/database'],
+        },
+      },
+    },
+  },
 });

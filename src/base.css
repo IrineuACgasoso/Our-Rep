@@ -60,6 +60,8 @@ header p { color:rgba(255,255,255,.65); font-size:13px; margin-top:4px; font-wei
 .status-bar.connected .status-dot { background:#4caf82; animation:pulse 2s infinite; }
 .status-bar.error { color:#e06050; }
 .status-bar.error .status-dot { background:#e06050; }
+.status-bar.permission-denied { color:#e0a850; }
+.status-bar.permission-denied .status-dot { background:#e0a850; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 .main-nav { display:flex; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; box-shadow:0 2px 20px rgba(0,0,0,.5); }

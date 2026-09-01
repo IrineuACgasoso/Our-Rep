@@ -3,7 +3,9 @@ import { ref, remove } from 'firebase/database';
 import { db } from '../../firebase/firebase';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
-import { StarsDisplay } from '../../components/StarSelector';
+import { DualStarsDisplay } from '../../components/StarSelector';
+import SafeImage from '../../components/SafeImage';
+import { safeExternalUrl } from '../../utils/utils';
 import { resolveCatPath } from './catHelpers';
 import TravelItemEditor from './TravelItemEditor';
 
@@ -53,10 +55,12 @@ export default function TravelItemCard({ dest, travelKey, catKey, itemKey, item 
         <div className="travel-rest-inner">
           <div className="travel-item-title">{r.name}</div>
           <span className="travel-item-badge">{r.visited ? '✓ Já fomos' : 'Quero ir'}</span>
-          {r.visited && r.stars > 0 && <div style={{ marginTop: 6 }}><StarsDisplay value={r.stars} /></div>}
+          {r.visited && (r.starsCaio > 0 || r.starsClarice > 0) && (
+            <div style={{ marginTop: 6 }}><DualStarsDisplay starsCaio={r.starsCaio} starsClarice={r.starsClarice} compact /></div>
+          )}
           {r.note && <div className="travel-item-sub" style={{ fontStyle: 'italic', marginTop: 6 }}>"{r.note}"</div>}
           {r.link && (
-            <button type="button" className="rest-action-btn" style={{ marginTop: 8 }} onClick={() => window.open(r.link, '_blank')}>📍 Abrir no Maps</button>
+            <button type="button" className="rest-action-btn" style={{ marginTop: 8 }} onClick={() => window.open(safeExternalUrl(r.link), '_blank', 'noopener,noreferrer')}>📍 Abrir no Maps</button>
           )}
           <p className="travel-item-sub" style={{ marginTop: 8 }}>Edite na aba Restaurantes</p>
         </div>
@@ -77,7 +81,7 @@ export default function TravelItemCard({ dest, travelKey, catKey, itemKey, item 
           {type === 'food' && <span className="travel-item-badge">Comida</span>}
           {type === 'attraction' && <span className="travel-item-badge">Atração</span>}
           {type === 'lodging' && item.bookingUrl && (
-            <button type="button" className="rest-action-btn" style={{ marginTop: 8 }} onClick={() => window.open(item.bookingUrl.startsWith('http') ? item.bookingUrl : 'https://' + item.bookingUrl, '_blank')}>
+            <button type="button" className="rest-action-btn" style={{ marginTop: 8 }} onClick={() => window.open(safeExternalUrl(item.bookingUrl.startsWith('http') ? item.bookingUrl : 'https://' + item.bookingUrl), '_blank', 'noopener,noreferrer')}>
               🔗 Reservar
             </button>
           )}

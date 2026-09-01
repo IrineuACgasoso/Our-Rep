@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatStars } from '../utils/utils';
+import { formatStars, PERSON_LABELS } from '../utils/utils';
 
 /** Um dos 5 ícones de estrela clicável, com metade esquerda/direita sensíveis a hover/click. */
 function StarUnit({ index, value, onPick }) {
@@ -32,10 +32,10 @@ function StarUnit({ index, value, onPick }) {
 }
 
 /** Seletor de nota (0 a 5, em passos de 0.5). Usado no form de adicionar/editar restaurante. */
-export function StarSelector({ value, onChange, showLabel = true }) {
+export function StarSelector({ value, onChange, showLabel = true, label = 'Nota:' }) {
   return (
     <div className="half-star-row">
-      <label>Nota:</label>
+      <label>{label}</label>
       {[1, 2, 3, 4, 5].map((i) => (
         <StarUnit key={i} index={i} value={value} onPick={onChange} />
       ))}
@@ -65,5 +65,29 @@ export function StarsDisplay({ value }) {
         {formatStars(value)}
       </span>
     </span>
+  );
+}
+
+/**
+ * Exibição estática das notas de Caio e Clarice lado a lado, usada nos cards de restaurante
+ * (lista) e nos itens de viagem vinculados a um restaurante.
+ */
+export function DualStarsDisplay({ starsCaio, starsClarice, compact = false }) {
+  if (!starsCaio && !starsClarice) return null;
+  return (
+    <div className="rest-dual-stars">
+      {starsCaio > 0 && (
+        <span className="rest-dual-stars-row">
+          {!compact && <span className="rest-dual-stars-label">{PERSON_LABELS.caio}</span>}
+          <StarsDisplay value={starsCaio} />
+        </span>
+      )}
+      {starsClarice > 0 && (
+        <span className="rest-dual-stars-row">
+          {!compact && <span className="rest-dual-stars-label">{PERSON_LABELS.clarice}</span>}
+          <StarsDisplay value={starsClarice} />
+        </span>
+      )}
+    </div>
   );
 }

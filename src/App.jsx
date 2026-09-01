@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { ToastProvider } from './context/ToastContext';
 import GiftsSection from './sections/gifts/GiftSection';
@@ -43,11 +44,52 @@ function LoginScreen() {
   );
 }
 
+function VerifyEmailScreen() {
+  const { user, verificationSent, resendVerification, refreshVerification, signOut } = useApp();
+  const [checking, setChecking] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  async function handleCheck() {
+    setChecking(true);
+    await refreshVerification();
+    setChecking(false);
+  }
+
+  async function handleResend() {
+    setResending(true);
+    await resendVerification();
+    setResending(false);
+  }
+
+  return (
+    <div id="loginScreen">
+      <div className="login-card">
+        <div className="login-emoji">📧</div>
+        <h1>Confirme seu e-mail</h1>
+        <p>
+          Enviamos um link de confirmação para <strong>{user?.email}</strong>. Abra o e-mail e clique no
+          link para liberar o acesso — as regras do banco exigem e-mail verificado.
+        </p>
+        <button type="button" className="rest-action-btn" onClick={handleCheck} disabled={checking} style={{ marginTop: 10 }}>
+          {checking ? 'Verificando...' : 'Já confirmei, continuar'}
+        </button>
+        <button type="button" className="rest-action-btn" onClick={handleResend} disabled={resending} style={{ marginTop: 8 }}>
+          {resending ? 'Enviando...' : verificationSent ? 'Reenviar e-mail' : 'Enviar e-mail de confirmação'}
+        </button>
+        <button type="button" className="rest-action-btn" onClick={signOut} style={{ marginTop: 8 }}>
+          Sair
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AppShell() {
-  const { authLoading, user, status, activeSection, setActiveSection } = useApp();
+  const { authLoading, user, emailVerified, status, activeSection, setActiveSection } = useApp();
 
   if (authLoading) return null;
   if (!user) return <LoginScreen />;
+  if (!emailVerified) return <VerifyEmailScreen />;
 
   return (
     <div data-section={activeSection}>
@@ -58,7 +100,13 @@ function AppShell() {
 
       <div className={`status-bar ${status}`}>
         <span className="status-dot" />
-        {status === 'connected' ? 'Conectado' : status === 'error' ? 'Erro de conexão' : 'Conectando...'}
+        {status === 'connected'
+          ? 'Conectado'
+          : status === 'permission-denied'
+          ? 'Confirme seu e-mail para ter acesso'
+          : status === 'error'
+          ? 'Erro de conexão'
+          : 'Conectando...'}
       </div>
 
       <nav className="main-nav">

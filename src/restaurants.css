@@ -12,9 +12,10 @@
 
 #restMap { height:380px; border-radius:16px; overflow:hidden; margin:0 1.5rem .5rem; display:none; border:1px solid var(--border2); }
 #restMap.visible { display:block; }
-.leaflet-popup-content-wrapper { background:#1e1e1e; border:1px solid var(--border2); color:var(--text); box-shadow:0 4px 20px rgba(0,0,0,.5); border-radius:12px; }
-.leaflet-popup-tip { background:#1e1e1e; }
+.leaflet-popup-content-wrapper { background:#1e1e1e !important; border:1px solid var(--border2); color:var(--text) !important; box-shadow:0 4px 20px rgba(0,0,0,.5); border-radius:12px; }
+.leaflet-popup-tip { background:#1e1e1e !important; }
 .leaflet-popup-close-button { color:var(--text-muted) !important; }
+.leaflet-container { background:#1a1a1a; }
 
 .rest-tags-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
 .rest-tag-filter { padding:5px 14px; border-radius:50px; border:1.5px solid var(--border2); background:transparent; font-family:'Nunito',sans-serif; font-size:12px; font-weight:600; color:var(--text-muted); cursor:pointer; transition:all .2s; white-space:nowrap; }
@@ -28,11 +29,13 @@
 .new-tag-confirm { padding:5px 14px; border-radius:50px; border:none; background:var(--acc); color:#fff; font-family:'Nunito',sans-serif; font-size:12px; font-weight:700; cursor:pointer; }
 .new-tag-cancel { padding:5px 10px; border-radius:50px; border:1px solid var(--border2); background:transparent; color:var(--text-muted); font-family:'Nunito',sans-serif; font-size:12px; cursor:pointer; }
 
-.rest-list { display:flex; flex-direction:column; gap:12px; padding:.5rem 1.5rem 1.5rem; }
+.rest-list { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:.5rem 1.5rem 1.5rem; align-items:start; }
 .rest-card { background:var(--card); border-radius:16px; border:1px solid var(--border2); padding:14px 16px; transition:transform .2s,box-shadow .2s; position:relative; animation:fadeUp .35s ease both; }
 .rest-card:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(0,0,0,.55); }
-.rest-card-top { display:flex; align-items:flex-start; gap:12px; }
+.rest-card-top { display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap; }
 .rest-icon { font-size:32px; flex-shrink:0; margin-top:2px; }
+.rest-photo { width:44px; height:44px; border-radius:12px; object-fit:cover; flex-shrink:0; margin-top:2px; background:var(--bg); border:1px solid var(--border2); }
+.rest-photo-placeholder { display:flex; align-items:center; justify-content:center; font-size:20px; background:var(--acc-pale); }
 .rest-body { flex:1; min-width:0; }
 .rest-name-btn { font-family:'Playfair Display',serif; font-size:16px; font-weight:600; color:var(--text); background:none; border:none; cursor:pointer; padding:0; text-align:left; transition:color .2s; display:flex; align-items:center; gap:6px; }
 .rest-name-btn:hover { color:var(--acc-dark); }
@@ -48,6 +51,9 @@
 .rest-stars .s-half { position:relative; display:inline-block; color:var(--border2); }
 .rest-stars .s-half::before { content:'★'; position:absolute; left:0; top:0; width:50%; overflow:hidden; color:#f0a830; }
 .rest-stars .s-empty { color:var(--border2); }
+.rest-dual-stars { display:flex; flex-direction:column; gap:2px; margin-top:5px; }
+.rest-dual-stars-row { display:flex; align-items:center; gap:6px; }
+.rest-dual-stars-label { font-size:10px; font-weight:700; color:var(--text-muted); min-width:44px; text-transform:uppercase; letter-spacing:.02em; }
 .rest-card-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
 .rest-card-tag { padding:2px 9px; border-radius:50px; background:var(--acc-pale); color:var(--acc-dark); font-size:10px; font-weight:700; }
 .rest-note { font-size:12px; color:var(--text-muted); margin-top:6px; line-height:1.55; font-style:italic; }
@@ -87,8 +93,8 @@
 .toggle-switch input:checked + .toggle-track { background:var(--acc); }
 .toggle-switch input:checked + .toggle-track::before { transform:translateX(20px); background:#fff; }
 
-@media(max-width:480px){
-  .rest-list{padding:.5rem 1rem 1rem;}
+@media(max-width:600px){
+  .rest-list{grid-template-columns:1fr; padding:.5rem 1rem 1rem;}
   .rest-toolbar{padding:1rem 1rem .5rem;}
   #restMap{margin:0 1rem .5rem;}
 }

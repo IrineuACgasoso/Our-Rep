@@ -1,17 +1,24 @@
 import { useState } from 'react';
 import { ref, update, remove } from 'firebase/database';
 import { db } from '../../firebase/firebase';
+import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
-import { StarSelector, StarsDisplay } from '../../components/StarSelector';
+import { StarSelector, DualStarsDisplay } from '../../components/StarSelector';
+import ImageDropzone from '../../components/ImageDropzone';
+import { PERSON_LABELS, personFromEmail, friendlyDbError, safeExternalUrl } from '../../utils/utils';
 
 export default function RestaurantCard({ restKey, rest, tagsData }) {
+  const { user } = useApp();
   const showToast = useToast();
+  const person = personFromEmail(user?.email);
   const [editorMode, setEditorMode] = useState(null); // null | 'note' | 'edit'
   const [name, setName] = useState(rest.name || '');
   const [link, setLink] = useState(rest.link || '');
   const [visited, setVisited] = useState(rest.visited || false);
-  const [stars, setStars] = useState(rest.stars || 0);
+  const [starsCaio, setStarsCaio] = useState(rest.starsCaio || 0);
+  const [starsClarice, setStarsClarice] = useState(rest.starsClarice || 0);
   const [note, setNote] = useState(rest.note || '');
+  const [photo, setPhoto] = useState(rest.photo || '');
   const [selectedTags, setSelectedTags] = useState(rest.tags || []);
 
   function openEditor(mode) {
@@ -19,8 +26,10 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
     setName(rest.name || '');
     setLink(rest.link || '');
     setVisited(rest.visited || false);
-    setStars(rest.stars || 0);
+    setStarsCaio(rest.starsCaio || 0);
+    setStarsClarice(rest.starsClarice || 0);
     setNote(rest.note || '');
+    setPhoto(rest.photo || '');
     setSelectedTags(rest.tags || []);
     setEditorMode(mode);
   }
@@ -32,9 +41,11 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
   async function save() {
     const updates = {
       note: visited ? note.trim() : '',
-      stars: visited ? stars : 0,
+      starsCaio: visited ? starsCaio : 0,
+      starsClarice: visited ? starsClarice : 0,
       visited,
       tags: selectedTags,
+      photo: photo || '',
     };
     if (editorMode === 'edit') {
       const n = name.trim();
@@ -46,8 +57,8 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
       await update(ref(db, `restaurants/${restKey}`), updates);
       showToast('Salvo! ✓');
       setEditorMode(null);
-    } catch {
-      showToast('Erro ao salvar.');
+    } catch (err) {
+      showToast(friendlyDbError(err));
     }
   }
 
@@ -57,8 +68,8 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
     try {
       await remove(ref(db, `restaurants/${restKey}`));
       showToast('Removido.');
-    } catch {
-      showToast('Erro.');
+    } catch (err) {
+      showToast(friendlyDbError(err, 'Erro.'));
     }
   }
 
@@ -67,10 +78,14 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
   return (
     <div className="rest-card">
       <div className="rest-card-top">
-        <div className="rest-icon">{rest.visited ? '✅' : '📍'}</div>
+        {rest.photo ? (
+          <img className="rest-photo" src={rest.photo} alt="" />
+        ) : (
+          <div className="rest-photo rest-photo-placeholder">{rest.visited ? '✅' : '📍'}</div>
+        )}
         <div className="rest-body">
           {rest.link ? (
-            <button type="button" className="rest-name-btn" onClick={() => window.open(rest.link, '_blank')}>
+            <button type="button" className="rest-name-btn" onClick={() => window.open(safeExternalUrl(rest.link), '_blank', 'noopener,noreferrer')}>
               {rest.name} <span className="map-icon">📍</span>
             </button>
           ) : (
@@ -80,8 +95,10 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
             <span className={`rest-badge ${rest.visited ? 'visited' : 'unvisited'}`}>
               {rest.visited ? '✓ Já fomos' : 'Queremos ir'}
             </span>
-            {rest.visited && rest.stars > 0 && <StarsDisplay value={rest.stars} />}
           </div>
+          {rest.visited && (rest.starsCaio > 0 || rest.starsClarice > 0) && (
+            <DualStarsDisplay starsCaio={rest.starsCaio} starsClarice={rest.starsClarice} />
+          )}
           {tagsHtml.length > 0 && (
             <div className="rest-card-tags">
               {tagsHtml.map((t) => <span key={t} className="rest-card-tag">{t}</span>)}
@@ -107,9 +124,16 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
               <div className="editor-row">
                 <input className="field-inp" value={link} onChange={(e) => setLink(e.target.value)} placeholder="Link Maps" />
               </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 600 }}>FOTO (opcional)</div>
+              <ImageDropzone
+                value={photo}
+                onChange={setPhoto}
+                prompt="📎 Arraste, cole (Ctrl+V) ou clique para adicionar uma foto"
+                compact
+              />
             </>
           )}
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 600 }}>CATEGORIAS</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, marginTop: 10, fontWeight: 600 }}>CATEGORIAS</div>
           <div className="editor-tags-wrap">
             {Object.keys(tagsData).length === 0 ? (
               <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Sem categorias criadas</span>
@@ -132,7 +156,18 @@ export default function RestaurantCard({ restKey, rest, tagsData }) {
           {visited && (
             <div>
               <div style={{ marginTop: 10 }}>
-                <StarSelector value={stars} onChange={setStars} />
+                <StarSelector
+                  value={starsCaio}
+                  onChange={setStarsCaio}
+                  label={`Nota do ${PERSON_LABELS.caio}${person === 'caio' ? ' (você)' : ''}:`}
+                />
+              </div>
+              <div style={{ marginTop: 6 }}>
+                <StarSelector
+                  value={starsClarice}
+                  onChange={setStarsClarice}
+                  label={`Nota da ${PERSON_LABELS.clarice}${person === 'clarice' ? ' (você)' : ''}:`}
+                />
               </div>
               <textarea
                 placeholder="Nota sobre este restaurante..."

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { escapeHtml } from '../../utils/escapeHtml';
+import { safeExternalUrl } from '../../utils/utils';
 
 const CIDADE_PADRAO = 'Recife';
 const coordsCache = {};
@@ -75,14 +75,20 @@ export default function RestaurantMap({ visible, entries, tagsData }) {
           iconAnchor: [7, 7],
           popupAnchor: [0, -7],
         });
-        const tagNames = (r.tags || []).map((tk) => tagsData[tk]?.name || '').filter(Boolean).join(' · ');
-        const starsText = r.visited && r.stars ? ` · ⭐ ${r.stars % 1 === 0 ? r.stars + '.0' : r.stars}` : '';
+        // r.name e r.note passam por escapeHtml; tagNames também precisa, pois vem de nomes de
+        // categoria cadastrados pelo usuário e é injetado como HTML cru no popup do Leaflet.
+        const tagNames = (r.tags || []).map((tk) => tagsData[tk]?.name || '').filter(Boolean).map(escapeHtml).join(' · ');
+        const starParts = [];
+        if (r.visited && r.starsCaio) starParts.push(`Caio ⭐${r.starsCaio % 1 === 0 ? r.starsCaio + '.0' : r.starsCaio}`);
+        if (r.visited && r.starsClarice) starParts.push(`Clarice ⭐${r.starsClarice % 1 === 0 ? r.starsClarice + '.0' : r.starsClarice}`);
+        const starsText = starParts.length ? ` · ${starParts.join(' · ')}` : '';
+        const safeLink = safeExternalUrl(r.link);
         const popup = `<div style="font-family:'Nunito',sans-serif;min-width:150px;padding:2px">
           <div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#e2dbd6">${escapeHtml(r.name)}</div>
           <div style="font-size:12px;color:${color};font-weight:600;margin-bottom:4px">${r.visited ? '✅ Já fomos' : '📍 Queremos ir'}${starsText}</div>
           ${tagNames ? `<div style="font-size:11px;color:#888;margin-bottom:4px">${tagNames}</div>` : ''}
           ${r.note ? `<div style="font-size:12px;font-style:italic;color:#aaa;margin-bottom:4px">"${escapeHtml(r.note)}"</div>` : ''}
-          ${r.link ? `<a href="${escapeHtml(r.link)}" target="_blank" style="font-size:11px;color:${color};text-decoration:none">📍 Ver no Maps</a>` : ''}
+          ${safeLink ? `<a href="${escapeHtml(safeLink)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:${color};text-decoration:none">📍 Ver no Maps</a>` : ''}
         </div>`;
         const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(mapRef.current);
         marker.bindPopup(popup, { maxWidth: 220 });
@@ -98,7 +104,6 @@ export default function RestaurantMap({ visible, entries, tagsData }) {
     })();
 
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, entries, tagsData]);
 
   return <div id="restMap" ref={containerRef} className={visible ? 'visible' : ''} />;

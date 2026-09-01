@@ -1,6 +1,8 @@
 import { ref, remove } from 'firebase/database';
 import { db } from '../../firebase/firebase';
 import { useToast } from '../../context/ToastContext';
+import SafeImage from '../../components/SafeImage';
+import { safeExternalUrl } from '../../utils/utils';
 
 /** Tela de detalhe de uma receita. Substitui openRecipeDetail() do recipes.js original. */
 export default function RecipeDetail({ recipeKey, recipe, onBack, onEdit }) {
@@ -25,16 +27,12 @@ export default function RecipeDetail({ recipeKey, recipe, onBack, onEdit }) {
         ← Voltar
       </button>
       <div className="recipe-detail-card">
-        {recipe.image ? (
-          <img
-            className="recipe-detail-img"
-            src={recipe.image}
-            alt=""
-            onError={(e) => { e.currentTarget.outerHTML = '<div class="recipe-detail-placeholder">🍇</div>'; }}
-          />
-        ) : (
-          <div className="recipe-detail-placeholder">🍇</div>
-        )}
+        <SafeImage
+          className="recipe-detail-img"
+          placeholderClassName="recipe-detail-placeholder"
+          placeholder="🍇"
+          src={recipe.image}
+        />
         <div className="recipe-detail-body">
           <h2>{recipe.name}</h2>
           <h4>Ingredientes</h4>
@@ -51,7 +49,7 @@ export default function RecipeDetail({ recipeKey, recipe, onBack, onEdit }) {
           )}
           <div className="recipe-detail-actions">
             {recipe.link && (
-              <button type="button" className="rest-action-btn" onClick={() => window.open(recipe.link, '_blank')}>
+              <button type="button" className="rest-action-btn" onClick={() => window.open(safeExternalUrl(recipe.link), '_blank', 'noopener,noreferrer')}>
                 🔗 Ver origem
               </button>
             )}

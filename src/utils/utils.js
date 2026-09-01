@@ -60,3 +60,38 @@ export function getImageUrlFromClipboardText(clipboardData) {
 export function formatStars(val) {
   return val % 1 === 0 ? `${val}.0` : `${val}`;
 }
+
+/** Rótulos de exibição das duas pessoas que avaliam restaurantes. */
+export const PERSON_LABELS = { caio: 'Caio', clarice: 'Clarice' };
+
+/**
+ * Só permite abrir/exibir links http(s). Bloqueia esquemas como `javascript:` ou `data:`
+ * que, se alguém colar num campo de link (presente, restaurante, receita...), poderiam
+ * rodar código ao clicar (self-XSS). Retorna '' se a URL não for http(s) válida.
+ */
+export function safeExternalUrl(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url, window.location.href);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+  } catch {
+    /* URL inválida */
+  }
+  return '';
+}
+export function personFromEmail(email) {
+  if (email === 'clarifloralmeida@gmail.com') return 'clarice';
+  return 'caio';
+}
+
+/**
+ * Converte um erro de leitura/escrita do Firebase numa mensagem amigável para toast.
+ * As Database Rules exigem e-mail verificado, então PERMISSION_DENIED normalmente
+ * significa isso — mostramos essa dica em vez de um "Erro." genérico.
+ */
+export function friendlyDbError(err, fallback = 'Erro ao salvar.') {
+  if (err?.code === 'PERMISSION_DENIED') {
+    return 'Confirme seu e-mail para ter acesso.';
+  }
+  return fallback;
+}
