@@ -16,8 +16,8 @@ const AppContext = createContext(null);
 const TRAVEL_CATS = [
   { key: 'culinaria', label: '🍜 Culinária' },
   { key: 'passeios', label: '🏛️ Passeios' },
-  { key: 'atracoes', label: '🎡 Atrações' },
   { key: 'hospedagem', label: '🏨 Hospedagem' },
+  { key: 'dicas', label: '💬 Dicas' },
 ];
 export { TRAVEL_CATS };
 

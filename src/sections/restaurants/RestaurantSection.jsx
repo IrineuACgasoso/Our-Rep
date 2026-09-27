@@ -6,14 +6,14 @@ import RestaurantCard from './RestaurantCard';
 
 // Leaflet é uma lib pesada (~150KB) usada só quando o mapa é aberto — carregar sob demanda
 // evita que todo mundo pague esse custo no bundle inicial, mesmo quem nunca abre o mapa.
-const RestaurantMap = lazy(() => import('./RestaurantMap'));
+const PlacesMap = lazy(() => import('../../components/PlacesMap'));
 
 export default function RestaurantsSection() {
   const { restaurantsData, tagsData, pendingTravelRestaurant, setPendingTravelRestaurant, travelsData, setActiveSection, activeSection } = useApp();
   const [search, setSearch] = useState('');
   const [tagFilter, setTagFilter] = useState(null);
   const [mapVisible, setMapVisible] = useState(false);
-  // Só monta o <RestaurantMap> (e o import lazy do Leaflet) na primeira vez que o usuário
+  // Só monta o <PlacesMap> (e o import lazy do Leaflet) na primeira vez que o usuário
   // realmente abre o mapa — depois disso ele fica montado (visible=false só esconde via CSS)
   // pra não perder o estado do mapa ao trocar de aba.
   const [mapEverOpened, setMapEverOpened] = useState(false);
@@ -71,7 +71,7 @@ export default function RestaurantsSection() {
 
       {mapEverOpened && (
         <Suspense fallback={null}>
-          <RestaurantMap visible={mapVisible && activeSection === 'restaurants'} entries={mapEntries} tagsData={tagsData} />
+          <PlacesMap visible={mapVisible && activeSection === 'restaurants'} entries={mapEntries} tagsData={tagsData} />
         </Suspense>
       )}
 

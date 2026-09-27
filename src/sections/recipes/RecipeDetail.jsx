@@ -20,6 +20,8 @@ export default function RecipeDetail({ recipeKey, recipe, onBack, onEdit }) {
   }
 
   const ingredients = recipe.ingredients || [];
+  // Receitas antigas só têm `link` (string única) — compatibilidade com `links` (array).
+  const links = Array.isArray(recipe.links) && recipe.links.length ? recipe.links : (recipe.link ? [recipe.link] : []);
 
   return (
     <div id="recipeDetailView">
@@ -35,24 +37,35 @@ export default function RecipeDetail({ recipeKey, recipe, onBack, onEdit }) {
         />
         <div className="recipe-detail-body">
           <h2>{recipe.name}</h2>
-          <h4>Ingredientes</h4>
-          <ul className="recipe-detail-ings">
-            {ingredients.map((ing, i) => (
-              <li key={i}>{ing}</li>
-            ))}
-          </ul>
+          {ingredients.length > 0 && (
+            <>
+              <h4>Ingredientes</h4>
+              <ul className="recipe-detail-ings">
+                {ingredients.map((ing, i) => (
+                  <li key={i}>{ing}</li>
+                ))}
+              </ul>
+            </>
+          )}
           {recipe.instructions && (
             <>
               <h4>Maneira de fazer</h4>
               <p className="recipe-detail-instr">{recipe.instructions}</p>
             </>
           )}
+          {links.length > 0 && (
+            <>
+              <h4>Vídeos / links</h4>
+              <div className="recipe-detail-actions" style={{ marginBottom: 8 }}>
+                {links.map((l, i) => (
+                  <button key={i} type="button" className="rest-action-btn" onClick={() => window.open(safeExternalUrl(l), '_blank', 'noopener,noreferrer')}>
+                    🔗 {links.length > 1 ? `Link ${i + 1}` : 'Ver origem'}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <div className="recipe-detail-actions">
-            {recipe.link && (
-              <button type="button" className="rest-action-btn" onClick={() => window.open(safeExternalUrl(recipe.link), '_blank', 'noopener,noreferrer')}>
-                🔗 Ver origem
-              </button>
-            )}
             <button type="button" className="rest-action-btn" onClick={() => onEdit(recipeKey)}>
               ✏️ Editar
             </button>

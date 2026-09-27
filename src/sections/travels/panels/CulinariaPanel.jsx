@@ -11,6 +11,7 @@ export default function CulinariaPanel({ travelKey }) {
   const [mode, setMode] = useState('food'); // food | restaurant
   const [foodName, setFoodName] = useState('');
   const [foodImg, setFoodImg] = useState('');
+  const [foodLink, setFoodLink] = useState('');
   const [selectedRest, setSelectedRest] = useState('');
 
   async function addFood() {
@@ -18,9 +19,10 @@ export default function CulinariaPanel({ travelKey }) {
     if (!name) { showToast('Informe o nome da comida.'); return; }
     if (!foodImg) { showToast('Adicione a foto da comida.'); return; }
     try {
-      await push(ref(db, `travels/${travelKey}/cats/culinaria/items`), { type: 'food', name, image: foodImg, addedAt: Date.now() });
+      await push(ref(db, `travels/${travelKey}/cats/culinaria/items`), { type: 'food', name, image: foodImg, link: foodLink.trim(), addedAt: Date.now() });
       setFoodName('');
       setFoodImg('');
+      setFoodLink('');
       showToast('Comida adicionada!');
     } catch {
       showToast('Erro ao salvar.');
@@ -60,6 +62,9 @@ export default function CulinariaPanel({ travelKey }) {
             <input className="field-inp" type="text" placeholder="Nome da comida *" value={foodName} onChange={(e) => setFoodName(e.target.value)} />
           </div>
           <ImageDropzone value={foodImg} onChange={setFoodImg} prompt="📷 Foto da comida" compact />
+          <div className="input-row" style={{ marginTop: 10 }}>
+            <input className="field-inp" type="url" placeholder="Link do Google Maps (opcional)" value={foodLink} onChange={(e) => setFoodLink(e.target.value)} />
+          </div>
           <button type="button" className="add-btn" style={{ marginTop: 12, width: '100%' }} onClick={addFood}>+ Comida</button>
         </div>
       ) : (

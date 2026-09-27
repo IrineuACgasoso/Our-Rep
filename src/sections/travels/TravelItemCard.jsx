@@ -68,7 +68,14 @@ export default function TravelItemCard({ dest, travelKey, catKey, itemKey, item 
     );
   }
 
-  const type = item.type || (catKey === 'culinaria' ? 'food' : catKey === 'atracoes' ? 'attraction' : catKey === 'hospedagem' ? 'lodging' : catKey === 'passeios' ? 'tour' : 'generic');
+  const type = item.type || (catKey === 'culinaria' ? 'food' : catKey === 'hospedagem' ? 'lodging' : catKey === 'passeios' ? 'tour' : 'generic');
+
+  // Comida, hospedagem e passeio podem ter um link do Google Maps (adicionável na edição).
+  const mapsBtn = item.link && (
+    <button type="button" className="rest-action-btn" style={{ marginTop: 8 }} onClick={() => window.open(safeExternalUrl(item.link), '_blank', 'noopener,noreferrer')}>
+      📍 Ver no mapa
+    </button>
+  );
 
   let body;
   if (type === 'food' || type === 'attraction' || type === 'lodging') {
@@ -85,6 +92,7 @@ export default function TravelItemCard({ dest, travelKey, catKey, itemKey, item 
               🔗 Reservar
             </button>
           )}
+          {mapsBtn}
         </div>
       </>
     );
@@ -95,6 +103,7 @@ export default function TravelItemCard({ dest, travelKey, catKey, itemKey, item 
         <div className="travel-item-body">
           <div className="travel-item-title">{item.name || item.text}</div>
           {item.note && <div className="travel-item-sub">{item.note}</div>}
+          {mapsBtn}
         </div>
       </>
     );

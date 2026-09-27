@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Suspense, lazy, useMemo, useState } from 'react';
 import { ref, remove } from 'firebase/database';
 import { db } from '../../firebase/firebase';
 import { TRAVEL_CATS } from '../../context/AppContext';
@@ -8,13 +8,18 @@ import DestEditor from './DestEditor';
 import TravelItemCard from './TravelItemCard';
 import CulinariaPanel from './panels/CulinariaPanel';
 import PasseiosPanel from './panels/PasseiosPanel';
-import AtracoesPanel from './panels/AtracoesPanel';
 import HospedagemPanel from './panels/HospedagemPanel';
+import DicasPanel from './panels/DicasPanel';
+
+// Leaflet é pesado — só carrega quando o mapa da viagem é aberto pela primeira vez.
+const TravelMap = lazy(() => import('./TravelMap'));
 
 export default function TravelDetail({ travelKey, dest, onBack }) {
   const showToast = useToast();
   const [activeCat, setActiveCat] = useState('culinaria');
   const [editingDest, setEditingDest] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [mapEverOpened, setMapEverOpened] = useState(false);
 
   const items = useMemo(
     () => Object.entries(getCatItems(dest, activeCat)).sort((a, b) => (a[1].addedAt || 0) - (b[1].addedAt || 0)),
@@ -40,6 +45,13 @@ export default function TravelDetail({ travelKey, dest, onBack }) {
       <div className="travel-detail-top">
         <button type="button" className="travel-back-btn" onClick={onBack}>← Voltar</button>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className={`travel-edit-btn${mapVisible ? ' active' : ''}`}
+            onClick={() => { setMapVisible((v) => !v); setMapEverOpened(true); }}
+          >
+            🗺️ Mapa
+          </button>
           <button type="button" className="travel-edit-btn" onClick={() => setEditingDest((v) => !v)}>✏️ Editar destino</button>
           <button type="button" className="travel-delete-btn" onClick={handleDeleteDest}>Remover destino</button>
         </div>
@@ -61,6 +73,12 @@ export default function TravelDetail({ travelKey, dest, onBack }) {
 
       {editingDest && <DestEditor travelKey={travelKey} dest={dest} onClose={() => setEditingDest(false)} />}
 
+      {mapEverOpened && (
+        <Suspense fallback={null}>
+          <TravelMap dest={dest} visible={mapVisible} />
+        </Suspense>
+      )}
+
       <div className="travel-cat-tabs">
         {TRAVEL_CATS.map((c) => (
           <button key={c.key} type="button" className={`travel-cat-tab${activeCat === c.key ? ' active' : ''}`} onClick={() => setActiveCat(c.key)}>
@@ -73,8 +91,8 @@ export default function TravelDetail({ travelKey, dest, onBack }) {
         <div className="travel-add-panel">
           {activeCat === 'culinaria' && <CulinariaPanel travelKey={travelKey} />}
           {activeCat === 'passeios' && <PasseiosPanel travelKey={travelKey} />}
-          {activeCat === 'atracoes' && <AtracoesPanel travelKey={travelKey} />}
           {activeCat === 'hospedagem' && <HospedagemPanel travelKey={travelKey} />}
+          {activeCat === 'dicas' && <DicasPanel travelKey={travelKey} />}
         </div>
         <div className="travel-items-list">
           {items.length === 0 ? (

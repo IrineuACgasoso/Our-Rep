@@ -111,6 +111,7 @@ textarea.field-inp { resize:vertical; padding-top:10px; }
 .edit-btn:hover, .travel-item-edit:hover { background:var(--acc); color:#fff; }
 .travel-edit-btn { background:var(--card); border:1px solid var(--border2); color:var(--acc-dark); font-family:'Nunito',sans-serif; font-size:12px; font-weight:700; padding:8px 14px; border-radius:50px; cursor:pointer; }
 .travel-edit-btn:hover { border-color:var(--acc); background:var(--acc-pale); }
+.travel-edit-btn.active { background:var(--acc); border-color:var(--acc); color:#fff; }
 .travel-detail-top { gap:8px; }
 .travel-item-actions { position:absolute; top:8px; right:8px; display:flex; gap:5px; z-index:2; }
 .gift-card.editing { cursor:default; }

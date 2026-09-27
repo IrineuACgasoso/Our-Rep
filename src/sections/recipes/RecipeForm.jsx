@@ -4,15 +4,21 @@ import { db } from '../../firebase/firebase';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import ImageDropzone from '../../components/ImageDropzone';
+import ChipInput from '../../components/ChipInput';
 import { compressImage, getImageFileFromClipboard } from '../../utils/utils';
 
-const emptyDraft = { name: '', instructions: '', link: '', image: '', ingredients: [] };
+const emptyDraft = { name: '', instructions: '', links: [], image: '', ingredients: [] };
+
+/** Uma receita antiga só tem `link` (string única) — normaliza pra `links` (array) ao carregar. */
+function toLinks(r) {
+  if (Array.isArray(r.links)) return r.links.slice();
+  return r.link ? [r.link] : [];
+}
 
 export default function RecipeForm({ editingKey, onDoneEditing }) {
   const { recipesData, activeSection } = useApp();
   const showToast = useToast();
   const [draft, setDraft] = useState(emptyDraft);
-  const [ingInput, setIngInput] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -22,7 +28,7 @@ export default function RecipeForm({ editingKey, onDoneEditing }) {
       setDraft({
         name: r.name || '',
         instructions: r.instructions || '',
-        link: r.link || '',
+        links: toLinks(r),
         image: r.image || '',
         ingredients: (r.ingredients || []).slice(),
       });
@@ -43,20 +49,22 @@ export default function RecipeForm({ editingKey, onDoneEditing }) {
     return () => document.removeEventListener('paste', onPaste);
   }, [activeSection]);
 
-  function addIngredient() {
-    const val = ingInput.trim();
-    if (!val) return;
+  function addIngredient(val) {
     setDraft((d) => ({ ...d, ingredients: [...d.ingredients, val] }));
-    setIngInput('');
   }
-
   function removeIngredient(i) {
     setDraft((d) => ({ ...d, ingredients: d.ingredients.filter((_, idx) => idx !== i) }));
   }
 
+  function addLink(val) {
+    setDraft((d) => ({ ...d, links: [...d.links, val] }));
+  }
+  function removeLink(i) {
+    setDraft((d) => ({ ...d, links: d.links.filter((_, idx) => idx !== i) }));
+  }
+
   function reset() {
     setDraft(emptyDraft);
-    setIngInput('');
     setError('');
     onDoneEditing();
   }
@@ -65,13 +73,12 @@ export default function RecipeForm({ editingKey, onDoneEditing }) {
     setError('');
     const name = draft.name.trim();
     if (!name) { setError('Informe o nome da receita.'); return; }
-    if (!draft.ingredients.length) { setError('Adicione ao menos um ingrediente.'); return; }
 
     const payload = {
       name,
       ingredients: draft.ingredients.slice(),
       instructions: draft.instructions.trim(),
-      link: draft.link.trim(),
+      links: draft.links.slice(),
       image: draft.image || '',
     };
 
@@ -103,29 +110,16 @@ export default function RecipeForm({ editingKey, onDoneEditing }) {
           placeholder="Nome da receita *"
           value={draft.name}
           onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); document.getElementById('recipeIngInp')?.focus(); } }}
         />
       </div>
 
-      <div className="input-row">
-        <input
-          id="recipeIngInp"
-          className="field-inp"
-          type="text"
-          placeholder="Ingrediente + Enter para adicionar"
-          value={ingInput}
-          onChange={(e) => setIngInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addIngredient(); } }}
-        />
-      </div>
-      <div className="recipe-ing-chips">
-        {draft.ingredients.map((ing, i) => (
-          <span key={i} className="recipe-ing-chip">
-            {ing}
-            <button type="button" onClick={() => removeIngredient(i)}>✕</button>
-          </span>
-        ))}
-      </div>
+      <ChipInput
+        id="recipeIngInp"
+        placeholder="Ingrediente (opcional) + OK para adicionar"
+        values={draft.ingredients}
+        onAdd={addIngredient}
+        onRemove={removeIngredient}
+      />
 
       <div className="name-row" style={{ marginTop: 10 }}>
         <textarea
@@ -137,13 +131,14 @@ export default function RecipeForm({ editingKey, onDoneEditing }) {
         />
       </div>
 
-      <div className="input-row" style={{ marginTop: 10 }}>
-        <input
-          className="field-inp"
+      <div style={{ marginTop: 10 }}>
+        <ChipInput
+          id="recipeLinkInp"
           type="url"
-          placeholder="Link da receita (Instagram, YouTube, TikTok...) — opcional"
-          value={draft.link}
-          onChange={(e) => setDraft((d) => ({ ...d, link: e.target.value }))}
+          placeholder="Link do vídeo/receita (Instagram, YouTube, TikTok...) + OK"
+          values={draft.links}
+          onAdd={addLink}
+          onRemove={removeLink}
         />
       </div>
 

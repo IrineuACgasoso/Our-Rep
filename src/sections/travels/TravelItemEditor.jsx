@@ -9,11 +9,13 @@ import { itemDbPath } from './catHelpers';
 function effectiveType(it, catKey) {
   if (it.type) return it.type;
   if (catKey === 'culinaria' && !it.restaurantKey) return 'food';
-  if (catKey === 'atracoes') return 'attraction';
   if (catKey === 'hospedagem') return 'lodging';
   if (catKey === 'passeios') return 'tour';
   return 'generic';
 }
+
+// Tipos que podem carregar um link do Google Maps (tudo exceto dicas/generic).
+const HAS_MAPS_LINK = new Set(['food', 'attraction', 'lodging', 'tour']);
 
 export default function TravelItemEditor({ dest, travelKey, catKey, itemKey, item, onClose }) {
   const showToast = useToast();
@@ -22,6 +24,7 @@ export default function TravelItemEditor({ dest, travelKey, catKey, itemKey, ite
   const [image, setImage] = useState(item.image || '');
   const [note, setNote] = useState(item.note || '');
   const [bookingUrl, setBookingUrl] = useState(item.bookingUrl || '');
+  const [link, setLink] = useState(item.link || '');
 
   async function save() {
     const n = name.trim();
@@ -46,6 +49,7 @@ export default function TravelItemEditor({ dest, travelKey, catKey, itemKey, ite
     } else {
       updates.text = n;
     }
+    if (HAS_MAPS_LINK.has(type)) updates.link = link.trim();
 
     try {
       await update(ref(db, itemDbPath(dest, travelKey, catKey, itemKey)), updates);
@@ -102,6 +106,16 @@ export default function TravelItemEditor({ dest, travelKey, catKey, itemKey, ite
           onChange={(e) => setNote(e.target.value)}
           placeholder="Observações"
           style={{ width: '100%' }}
+        />
+      )}
+      {HAS_MAPS_LINK.has(type) && (
+        <input
+          className="field-inp"
+          type="url"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder="Link do Google Maps (opcional)"
+          style={{ width: '100%', marginTop: 8 }}
         />
       )}
       <div className="editor-actions">

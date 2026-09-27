@@ -67,7 +67,9 @@ export default function RecipesSection() {
               <div className="recipe-info">
                 <div className="recipe-title">{r.name}</div>
                 <div className="recipe-ing-count">
-                  {(r.ingredients || []).length} ingrediente{(r.ingredients || []).length === 1 ? '' : 's'}
+                  {(r.ingredients || []).length > 0
+                    ? `${r.ingredients.length} ingrediente${r.ingredients.length === 1 ? '' : 's'}`
+                    : (() => { const n = (r.links || (r.link ? [r.link] : [])).length; return n ? `${n} link${n === 1 ? '' : 's'}` : 'Sem ingredientes'; })()}
                 </div>
               </div>
             </div>
